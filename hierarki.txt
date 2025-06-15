@@ -1,0 +1,89 @@
+aPS D:\KULAIH\ALL_PROJECT\KP_SistemInformasidanPencatatanBarang\frontend> tree SIPB-FrontSide-main /f
+Folder PATH listing for volume CRULDRIVE_DAVE
+Volume serial number is BC61-5356
+D:\KULAIH\ALL_PROJECT\KP_SISTEMINFORMASIDANPENCATATANBARANG\FRONTEND\SIPB-FRONTSIDE-MAIN
+│   .env
+│   .env.development
+│   .gitignore
+│   index.html
+│   package-lock.json
+│   package.json
+│   postcss.config.js
+│   README.md
+│   tailwind.config.js
+│   vite.config.js
+│
+├───.qodo
+├───.vs
+│   │   slnx.sqlite
+│   │   VSWorkspaceState.json
+│   │
+│   └───SIPB-FrontSide-main
+│       └───v16
+├───.vscode
+│       extensions.json
+│
+├───public
+│       vite.svg
+│
+└───src
+    │   App.vue
+    │   index.css
+    │   main.js
+    │   style.css
+    │
+    ├───assets
+    │       vue.svg
+    │
+    ├───components
+    │   │   BarangForm.vue
+    │   │   BarangTable.vue
+    │   │   BaseButton.vue
+    │   │   Navbar.vue
+    │   │   Sidebar.vue
+    │   │   SidebarLink.vue
+    │   │
+    │   └───pengajuan
+    │           PilihBarangCard.vue
+    │           RingkasanPengajuan.vue
+    │
+    ├───layouts
+    │       DefaultLayout.vue
+    │
+    ├───lib
+    │       api.js
+    │
+    ├───pages
+    │   │   BatasBarang.vue
+    │   │   BatasPengajuan.vue
+    │   │   JenisBarang.vue
+    │   │   PengadaanBarang.vue
+    │   │   PengajuanBarang.vue
+    │   │   Users.vue
+    │   │
+    │   ├───admin
+    │   │       PengadaanDisetujui.vue
+    │   │       PengadaanManual.vue
+    │   │       PersetujuanPengadaan.vue
+    │   │
+    │   ├───manager
+    │   │       RiwayatCabang.vue
+    │   │
+    │   ├───shared
+    │   │       DaftarBarang.vue
+    │   │       Dashboard.vue
+    │   │       LaporanPengadaan.vue
+    │   │       Login.vue
+    │   │
+    │   └───user
+    │           PengajuanBarang.vue
+    │           RiwayatPengajuan.vue
+    │
+    ├───router
+    │       index.js
+    │
+    └───stores
+            loadingStore.js
+            userStore.js
+
+PS D:\KULAIH\ALL_PROJECT\KP_SistemInformasidanPencatatanBarang\frontend>
