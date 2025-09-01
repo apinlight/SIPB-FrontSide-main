@@ -1,91 +1,117 @@
-// src/stores/userStore.js
-import { defineStore } from 'pinia'
-import { logger } from '@/lib/logger'
+import { defineStore } from 'pinia';
+import apiClient from '@/lib/api'; // 1. Import our new API service
+import router from '@/router'; // 2. Import the router for redirects
+import { logger } from '@/lib/logger';
 
 export const useUserStore = defineStore('user', {
-  state: () => ({
-    user: null,
-    token: null,
-    isAuthenticated: false
-  }),
+    state: () => ({
+        user: JSON.parse(localStorage.getItem('auth_user')) || null,
+        token: localStorage.getItem('auth_token') || null,
+    }),
 
-  getters: {
-    userRoles: (state) => {
-      return state.user?.roles?.map(role => role.name) || []
-    },
-    
-    // ✅ FIX: Use this.userRoles instead of state.userRoles
-    isAdmin() {
-      return this.userRoles.includes('admin')
-    },
-    
-    isManager() {
-      return this.userRoles.includes('manager')
-    },
-    
-    isUser() {
-      return this.userRoles.includes('user')
-    }
-  },
-
-  actions: {
-    setUser(userData) {
-      logger.info('UserStore: Setting user data', { 
-        username: userData.username,
-        roles: userData.roles?.map(r => r.name)
-      })
-      
-      this.user = userData
-      this.isAuthenticated = true
-      localStorage.setItem('auth_user', JSON.stringify(userData))
+    getters: {
+        isAuthenticated: (state) => !!state.token && !!state.user,
+        userRoles: (state) => state.user?.roles || [],
+        isAdmin(state) {
+            return this.userRoles.includes('admin');
+        },
+        isManager(state) {
+            return this.userRoles.includes('manager');
+        },
     },
 
-    setToken(token) {
-      // ✅ FIX: logger.auth.tokenSet doesn't exist in your logger
-      logger.info('UserStore: Token set')
-      this.token = token
-      localStorage.setItem('auth_token', token)
-    },
+    actions: {
+        /**
+         * The main action for logging in. It calls the API and, on success,
+         * commits the authentication data to the store.
+         * @param {object} credentials - { login, password }
+         */
+        async login(credentials) {
+            try {
+                const response = await apiClient.post('/login', credentials);
+                const { user, token } = response.data;
+                this.setAuthData(user, token);
+                
+                // Redirect to the dashboard after successful login
+                await router.push({ name: 'Dashboard' });
+            } catch (error) {
+                logger.error('Login failed:', error.response?.data?.message || error.message);
+                // Re-throw the error so the component can display a message
+                throw error;
+            }
+        },
 
-    clearUser() {
-      logger.auth.logout()
-      this.user = null
-      this.token = null
-      this.isAuthenticated = false
-      
-      localStorage.removeItem('auth_user')
-      localStorage.removeItem('auth_token')
-    },
+        /**
+         * The main action for logging out. This is the single source of truth
+         * for logging out, called from components and the api.js interceptor.
+         */
+        async logout() {
+            if (!this.token) return; // Avoid running if already logged out
 
-    loadUserFromStorage() {
-      try {
-        const storedUser = localStorage.getItem('auth_user')
-        const storedToken = localStorage.getItem('auth_token')
+            logger.auth.logout();
+            try {
+                // Inform the backend that the token is being logged out
+                await apiClient.post('/logout');
+            } catch (error) {
+                logger.error('Logout API call failed, proceeding with client-side logout.', error);
+            } finally {
+                // Always clear client-side data, even if the API call fails
+                this.clearAuthData();
+                // Redirect to the login page
+                await router.push({ name: 'Login' });
+            }
+        },
+
+        /**
+         * A private helper action to centralize setting auth data.
+         * @param {object} user - The user object from the API
+         * @param {string} token - The bearer token from the API
+         */
+        setAuthData(user, token) {
+            this.user = user;
+            this.token = token;
+            
+            localStorage.setItem('auth_user', JSON.stringify(user));
+            localStorage.setItem('auth_token', token);
+            
+            logger.info('UserStore: Auth data set', { username: user.username });
+        },
+
+        /**
+         * A private helper action to centralize clearing auth data.
+         */
+        clearAuthData() {
+            this.user = null;
+            this.token = null;
+
+            localStorage.removeItem('auth_user');
+            localStorage.removeItem('auth_token');
+        },
         
-        if (storedUser && storedToken) {
-          this.user = JSON.parse(storedUser)
-          this.token = storedToken
-          this.isAuthenticated = true
-          
-          logger.info('UserStore: Loaded user from storage', { 
-            username: this.user.username,
-            hasToken: !!this.token
-          })
-          return true
+        /**
+         * An initialization action to check if the stored token is still valid.
+         * This should be called when the application first loads (in App.vue or main.js).
+         */
+        async checkAuth() {
+            if (this.isAuthenticated) {
+                try {
+                    logger.info('Checking auth status with server...');
+                    const response = await apiClient.get('/profile');
+                    // If the server confirms the user, update the user data
+                    this.setUser(response.data);
+                } catch (error) {
+                    logger.error('Auth check failed, token might be invalid.', error);
+                    // The 401 interceptor in api.js will automatically call logout()
+                }
+            }
+        },
+
+        /**
+         * Action to update the user data in the store (e.g., after a profile update).
+         */
+        setUser(userData) {
+             this.user = userData;
+             localStorage.setItem('auth_user', JSON.stringify(userData));
         }
-      } catch (error) {
-        logger.error('UserStore: Failed to load user from storage', error)
-        this.clearUser()
-      }
-      return false
-    },
-
-    hasRole(role) {
-      return this.userRoles.includes(role)
-    },
-
-    hasAnyRole(roles) {
-      return roles.some(role => this.userRoles.includes(role))
     }
-  }
-})
+});
