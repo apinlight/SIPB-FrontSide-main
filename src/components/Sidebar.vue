@@ -1,36 +1,23 @@
 <template>
-  <aside
-    :class="[
-      'bg-gray-100 h-full p-4 shadow-md transition-all duration-300',
-      collapsed ? 'w-20' : 'w-64'
-    ]"
-  >
-    <!-- Tombol Collapse -->
+  <aside :class="['bg-gray-100 h-full p-4 shadow-md transition-all duration-300', collapsed ? 'w-20' : 'w-64']">
     <div class="flex justify-end mb-4">
       <button @click="collapsed = !collapsed" class="text-sm text-gray-600 hover:text-gray-800">
         {{ collapsed ? '≡' : 'x' }}
       </button>
     </div>
-
-    <!-- Menu -->
     <nav class="flex flex-col gap-2">
-      <SidebarLink
-        v-for="item in filteredMenu"
-        :key="item.name"
-        :item="item"
-        :collapsed="collapsed"
-      />
+      <SidebarLink v-for="item in filteredMenu" :key="item.name" :item="item" :collapsed="collapsed" />
     </nav>
   </aside>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useUserStore } from '@/stores/userStore'
-import SidebarLink from './SidebarLink.vue'
+import { ref, computed } from 'vue';
+import { useUserStore } from '@/stores/userStore';
+import SidebarLink from './SidebarLink.vue';
 
-const collapsed = ref(false)
-const userStore = useUserStore()
+const collapsed = ref(false);
+const userStore = useUserStore();
 
 const allMenu = [
   { 
@@ -81,24 +68,31 @@ const allMenu = [
       { name: 'Batas Pengajuan', path: '/batas-pengajuan', emoji: '📊', roles: ['admin'] }
     ]
   }
-]
+];
 
-// Filter menu based on user roles
+// This logic is now safer and more robust
 const filteredMenu = computed(() => {
-  if (!userStore.user || !userStore.userRoles.length) {
-    return []
-  }
+  if (!userStore.isAuthenticated) return [];
 
-  return allMenu.filter(item => {
-    const hasAccess = item.roles.some(role => userStore.hasRole(role))
-    
-    if (hasAccess && item.children) {
-      item.children = item.children.filter(child => 
-        child.roles.some(role => userStore.hasRole(role))
-      )
-    }
-    
-    return hasAccess
-  })
-})
+  const userRoles = userStore.userRoles;
+
+  return allMenu
+    .map(item => {
+      // Create a new item object to avoid mutation
+      const newItem = { ...item };
+      
+      // If the item has children, filter them first
+      if (newItem.children) {
+        newItem.children = newItem.children.filter(child =>
+          child.roles.some(role => userRoles.includes(role))
+        );
+      }
+      return newItem;
+    })
+    .filter(item => {
+      // Then, filter the parent item based on its roles or if it still has visible children
+      const hasAccess = item.roles.some(role => userRoles.includes(role));
+      return hasAccess && (!item.children || item.children.length > 0);
+    });
+});
 </script>
