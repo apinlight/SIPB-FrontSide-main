@@ -1,107 +1,95 @@
 <!-- src/pages/shared/Login.vue -->
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-100">
-    <div class="w-full max-w-sm bg-white p-6 rounded shadow">
-      <h2 class="text-2xl font-bold mb-4">Login</h2>
-      <form @submit.prevent="loginActivity">
+  <div class="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+    <div class="w-full max-w-sm rounded-lg bg-white p-6 shadow-md">
+      <h2 class="mb-6 text-center text-2xl font-bold text-gray-800">Login to SIPB</h2>
+      
+      <form @submit.prevent="handleLogin">
         <div class="mb-4">
-          <label class="block text-gray-700">Username or Email</label>
+          <label for="login" class="block text-sm font-medium text-gray-700">Username or Email</label>
           <input 
-            v-model="username" 
+            v-model="credentials.login" 
+            id="login"
             type="text" 
-            name="username"
-            placeholder="username or email"
-            class="w-full px-3 py-2 border rounded" 
+            placeholder="e.g., your_username"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm" 
             required 
           />
         </div>
-        <div class="mb-4">
-          <label class="block text-gray-700">Password</label>
+        
+        <div class="mb-6">
+          <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
           <input 
-            v-model="password" 
+            v-model="credentials.password" 
+            id="password"
             type="password" 
-            name="password"
-            placeholder="password"
-            class="w-full px-3 py-2 border rounded" 
+            placeholder="••••••••"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm" 
             required 
           />
         </div>
+
+        <p v-if="errorMsg" class="mb-4 text-center text-sm text-red-600">{{ errorMsg }}</p>
+
         <button 
           type="submit" 
           :disabled="loading"
-          class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+          class="flex w-full justify-center rounded-md border border-transparent bg-green-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
         >
-          {{ loading ? 'LOADING...' : 'LOGIN' }}
+          {{ loading ? 'Signing in...' : 'Sign In' }}
         </button>
-        <p v-if="errorMsg" class="text-red-500 mt-2">{{ errorMsg }}</p>
+
       </form>
+      <div class="mt-4 text-center text-sm">
+        <router-link to="/register" class="font-medium text-green-600 hover:text-green-500">
+          Don't have an account? Register
+        </router-link>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import API from '../../lib/api'
-import { useRouter } from 'vue-router'
-import { toast } from 'vue3-toastify'
-import { useUserStore } from '../../stores/userStore'
-import { logger } from '@/lib/logger'
+import { reactive, ref } from 'vue';
+import { useUserStore } from '@/stores/userStore'; // ✅ Only import the store
+import { logger } from '@/lib/logger';
 
-const router = useRouter()
-const userStore = useUserStore()
-const loading = ref(false)
-const username = ref('')
-const password = ref('')
-const errorMsg = ref('')
+// ✅ The router is no longer needed here, as the store handles redirection.
+const userStore = useUserStore();
+const loading = ref(false);
+const errorMsg = ref('');
 
-onMounted(() => {
-  logger.info('Shared: Login component mounted (stateless)')
-  
-  // ✅ Clear any existing auth data
-  userStore.clearUser()
-  
-  logger.info('Shared: Login page ready')
-})
+// ✅ Use a reactive object for the form data for cleaner binding.
+const credentials = reactive({
+  login: '',
+  password: '',
+});
 
-async function loginActivity() {
-  loading.value = true
-  errorMsg.value = ''
-  
-  logger.info('Shared: Starting stateless login', { username: username.value })
-  
+// ✅ The onMounted hook is removed. It's not the component's job to clear user state.
+
+/**
+ * The login method is now incredibly simple. It delegates all work to the store.
+ */
+async function handleLogin() {
+  loading.value = true;
+  errorMsg.value = '';
+  logger.info('Login form submitted', { login: credentials.login });
+
   try {
-    // ✅ Stateless login
-    const response = await API.post('/api/login', {
-      login: username.value,
-      password: password.value,
-    })
-
-    logger.info('Shared: Login successful', {
-      user: response.data.user?.username,
-      branch: response.data.user?.branch_name,
-      roles: response.data.user?.roles?.map(r => r.name),
-      tokenType: response.data.token_type
-    })
+    // ✅ This is the ONLY business logic call. The component trusts the store
+    // to handle the API call, state changes, and redirection.
+    await userStore.login(credentials);
     
-    // ✅ Store user and token
-    userStore.setUser(response.data.user)
-    userStore.setToken(response.data.token)
-    
-    toast.success('Login successful!')
-    router.push('/dashboard')
+    // No router.push() needed here. The store does it.
+    // No toast needed here, as the successful redirect provides feedback.
 
   } catch (error) {
-    logger.error('Shared: Login failed', {
-      error: error.message,
-      response: error.response?.data,
-      username: username.value
-    })
-    
-    const errorMessage = error.response?.data?.message || 'Login failed'
-    errorMsg.value = errorMessage
-    toast.error(errorMessage)
+    // The store's login action re-throws the error so we can catch it here.
+    // The component's ONLY job is to display the error message.
+    errorMsg.value = error.response?.data?.message || 'Invalid username or password.';
+    logger.error('Login failed in component', { error: errorMsg.value });
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 </script>
