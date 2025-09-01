@@ -98,6 +98,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
+import { formatDate, formatCurrency } from '@/utils/formatters';
 import { usePengadaanAdminStore } from '@/stores/pengadaanAdminStore';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 
@@ -134,6 +135,4 @@ const resetForm = () => {
   form.value = { unique_id: '', id_barang: '', jumlah: 1, keterangan: '' };
 };
 
-const formatDate = (dateString) => new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-const formatCurrency = (amount) => new Intl.NumberFormat('id-ID').format(amount || 0);
 </script>

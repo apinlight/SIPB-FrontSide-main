@@ -99,6 +99,7 @@ import { ref, onMounted, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { usePengadaanAdminStore } from '@/stores/pengadaanAdminStore';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
+import { formatDate, formatCurrency } from '@/utils/formatters';
 
 const selectedPengajuan = ref(null);
 
@@ -138,7 +139,7 @@ const closeDetail = () => {
   selectedPengajuan.value = null;
 };
 
-const formatDate = (dateString) => new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-const formatCurrency = (amount) => new Intl.NumberFormat('id-ID').format(amount || 0);
+// This function is specific to this component, so it stays.
 const getTotalHarga = (pengajuan) => pengajuan.details?.reduce((total, detail) => total + ((detail.barang?.harga_barang || 0) * detail.jumlah), 0) || 0;
+
 </script>

@@ -52,6 +52,7 @@ import { ref, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import { useUserStore } from '@/stores/userStore';
+import { formatDate, formatCurrency, getStatusClass } from '@/utils/formatters';
 import { useRiwayatCabangStore } from '@/stores/riwayatCabangStore';
 import apiClient from '@/lib/api'; // Only needed for the detail view
 import { toast } from 'vue3-toastify';
@@ -89,18 +90,6 @@ const showDetail = async (pengajuan) => {
 const closeDetail = () => {
   selectedPengajuan.value = null;
 };
-
-// Formatting helpers
-const getStatusClass = (status) => ({
-  'Menunggu Persetujuan': 'bg-yellow-100 text-yellow-800',
-  'Disetujui': 'bg-green-100 text-green-800',
-  'Ditolak': 'bg-red-100 text-red-800',
-  'Selesai': 'bg-blue-100 text-blue-800',
-}[status] || 'bg-gray-100 text-gray-800');
-
-const formatDate = (dateString) => new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-const formatCurrency = (amount) => new Intl.NumberFormat('id-ID').format(amount || 0);
 
 const getTotalHarga = (pengajuan) => pengajuan.details?.reduce((total, detail) => total + ((detail.barang?.harga_barang || 0) * detail.jumlah), 0) || 0;
 </script>

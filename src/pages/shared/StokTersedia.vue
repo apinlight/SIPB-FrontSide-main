@@ -87,6 +87,7 @@ import { onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import BaseButton from '@/components/BaseButton.vue';
+import { getStockStatus, getStockStatusClass, getStockBadgeClass } from '@/utils/formatters';
 import { useStokStore } from '@/stores/stokStore'; // ✅ Use the new store
 
 const store = useStokStore();
@@ -98,21 +99,4 @@ onMounted(() => {
   store.fetchStock();
 });
 
-// Formatting helpers remain in the component as they are purely for presentation
-const getStockStatus = (stock) => {
-  if (stock === 0) return 'Habis';
-  if (stock <= 5) return 'Menipis';
-  return 'Tersedia';
-};
-const getStockStatusClass = (stock) => {
-  if (stock === 0) return 'text-red-600 font-semibold';
-  if (stock <= 5) return 'text-orange-600 font-semibold';
-  return 'text-green-600 font-semibold';
-};
-const getStockBadgeClass = (stock) => {
-  const base = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
-  if (stock === 0) return `${base} bg-red-100 text-red-800`;
-  if (stock <= 5) return `${base} bg-orange-100 text-orange-800`;
-  return `${base} bg-green-100 text-green-800`;
-};
 </script>
