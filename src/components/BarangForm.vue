@@ -39,7 +39,13 @@ import { reactive, ref, watch, onMounted } from 'vue'
 import API from '@/lib/api'
 import { logger } from '@/lib/logger'
 
-const props = defineProps({ editData: Object })
+const props = defineProps({
+  editData: {
+    type: Object,
+    default: null
+  }
+})
+
 const emit = defineEmits(['close', 'saved'])
 
 const form = reactive({

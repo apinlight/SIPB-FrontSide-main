@@ -228,15 +228,21 @@ const fetchRiwayat = async (page = 1) => {
     const params = {
       page,
       search: searchRiwayat.value || undefined,
-      user_id: filterUser.value || undefined,
-      type: 'manual'
+      user_id: filterUser.value || undefined
+      // ✅ Removed 'type: manual' - column doesn't exist in database
     }
     
     const res = await API.get('/gudang', { params })
-    riwayatList.value = res.data.data
     
-    if (res.data.meta) {
-      pagination.value = res.data.meta
+    // ✅ Handle different response structures
+    if (res.data.success) {
+      riwayatList.value = res.data.data || []
+      if (res.data.meta) {
+        pagination.value = res.data.meta
+      }
+    } else {
+      // Fallback for direct data array
+      riwayatList.value = Array.isArray(res.data) ? res.data : res.data.data || []
     }
   } catch (e) {
     logger.error('Failed to load riwayat data:', e.response?.data?.message || e.message)

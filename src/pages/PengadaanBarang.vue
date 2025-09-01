@@ -6,9 +6,9 @@
     </div>
 
     <div class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-bold">Pengadaan Barang</h1>
+      <h1 class="text-2xl font-bold">Manajemen Stok Gudang</h1>
       <button @click="toggleForm" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-        {{ showForm ? 'Tutup Form' : '+ Tambah Barang' }}
+        {{ showForm ? 'Tutup Form' : '+ Tambah Stok' }}
       </button>
     </div>
 
@@ -43,7 +43,7 @@ const statusFilter = ref('')
 const alert = ref({ message: '', type: 'success' })
 
 const form = ref({
-  id_pengadaan: '',
+  unique_id: '',
   id_barang: '',
   jumlah_barang: 0,
   tanggal_pengadaan: '',
@@ -78,7 +78,7 @@ const fetchData = async (page = 1) => {
       status: statusFilter.value || undefined
     }
     
-    const response = await API.get('/pengadaan', { params })
+    const response = await API.get('/gudang', { params })
     pengadaanList.value = response.data.data
     
     if (response.data.meta) {
@@ -121,15 +121,13 @@ const submitForm = async () => {
     }
     
     if (editMode.value) {
-      await API.put(`/pengadaan/${form.value.id_pengadaan}`, payload)
-      logger.success('Pengadaan updated successfully', { id: form.value.id_pengadaan })
-      showAlert('Pengadaan berhasil diupdate', 'success')
+      await API.put(`/gudang/${payload.unique_id}/${payload.id_barang}`, payload)
+      logger.success('Gudang entry updated successfully', { unique_id: payload.unique_id, id_barang: payload.id_barang })
+      showAlert('Data gudang berhasil diupdate', 'success')
     } else {
-      // Generate ID for new pengadaan
-      payload.id_pengadaan = 'PGD' + Date.now()
-      await API.post('/pengadaan', payload)
-      logger.success('Pengadaan created successfully', { id: payload.id_pengadaan })
-      showAlert('Pengadaan berhasil ditambahkan', 'success')
+      await API.post('/gudang', payload)
+      logger.success('Gudang entry created successfully', { unique_id: payload.unique_id, id_barang: payload.id_barang })
+      showAlert('Data gudang berhasil ditambahkan', 'success')
     }
     
     resetForm()
@@ -144,16 +142,17 @@ const submitForm = async () => {
 }
 
 const editItem = (item) => {
-  logger.info('Editing pengadaan', { 
-    id: item.id_pengadaan,
+  logger.info('Editing gudang entry', { 
+    unique_id: item.unique_id,
+    id_barang: item.id_barang,
     barang: item.barang?.nama_barang 
   })
   
   form.value = {
-    id_pengadaan: item.id_pengadaan,
+    unique_id: item.unique_id,
     id_barang: item.id_barang,
     jumlah_barang: item.jumlah_barang,
-    tanggal_pengadaan: item.tanggal_pengadaan,
+    tanggal_pengadaan: item.tanggal_pengadaan || '',
     supplier: item.supplier || '',
     keterangan: item.keterangan || ''
   }
@@ -162,29 +161,30 @@ const editItem = (item) => {
 }
 
 const deleteItem = async (item) => {
-  if (confirm(`Yakin ingin menghapus pengadaan "${item.id_pengadaan}"?`)) {
-    logger.info('Deleting pengadaan', { 
-      id: item.id_pengadaan,
+  if (confirm(`Yakin ingin menghapus data gudang "${item.barang?.nama_barang}"?`)) {
+    logger.info('Deleting gudang entry', { 
+      unique_id: item.unique_id,
+      id_barang: item.id_barang,
       barang: item.barang?.nama_barang 
     })
     
     try {
-      await API.delete(`/pengadaan/${item.id_pengadaan}`)
-      logger.success('Pengadaan deleted successfully', { id: item.id_pengadaan })
-      showAlert('Pengadaan berhasil dihapus', 'success')
+      await API.delete(`/gudang/${item.unique_id}/${item.id_barang}`)
+      logger.success('Gudang entry deleted successfully', { unique_id: item.unique_id, id_barang: item.id_barang })
+      showAlert('Data gudang berhasil dihapus', 'success')
       fetchData()
     } catch (error) {
-      logger.error('Error deleting pengadaan:', error.message, { id: item.id_pengadaan })
-      const errorMsg = error.response?.data?.message || 'Gagal menghapus pengadaan'
+      logger.error('Error deleting gudang entry:', error.message, { unique_id: item.unique_id, id_barang: item.id_barang })
+      const errorMsg = error.response?.data?.message || 'Gagal menghapus data gudang'
       showAlert(errorMsg, 'error')
     }
   }
 }
 
 const resetForm = () => {
-  logger.debug('Resetting pengadaan form')
+  logger.debug('Resetting gudang form')
   form.value = {
-    id_pengadaan: '',
+    unique_id: '',
     id_barang: '',
     jumlah_barang: 0,
     tanggal_pengadaan: '',

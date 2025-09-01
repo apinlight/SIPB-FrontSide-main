@@ -264,18 +264,32 @@ const fetchData = async (page = 1) => {
     }
     
     const res = await API.get('/pengajuan', { params })
-    pengajuanList.value = res.data.data
     
-    if (res.data.meta) {
-      pagination.value = res.data.meta
+    // ✅ Handle different response structures
+    let dataArray = []
+    if (res.data.success) {
+      dataArray = res.data.data || []
+      pengajuanList.value = dataArray
+      if (res.data.meta) {
+        pagination.value = res.data.meta
+      }
+    } else {
+      // Fallback for direct data array
+      dataArray = Array.isArray(res.data) ? res.data : res.data.data || []
+      pengajuanList.value = dataArray
     }
 
     // Extract unique branches
-    const uniqueBranches = [...new Set(res.data.data.map(p => p.user?.branch_name).filter(Boolean))]
+    const uniqueBranches = [...new Set(dataArray.map(p => p.user?.branch_name).filter(Boolean))]
     branches.value = uniqueBranches
   } catch (e) {
     logger.error('Failed to load pengajuan data:', e.response?.data?.message || e.message)
-    toast.error('Gagal memuat pengajuan')
+    
+    // ✅ Set empty data on error to prevent crashes
+    pengajuanList.value = []
+    branches.value = []
+    
+    toast.error(`Backend Error: ${e.response?.data?.message || e.message}`)
   } finally {
     loading.value = false
   }

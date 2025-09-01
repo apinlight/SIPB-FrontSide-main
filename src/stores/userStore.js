@@ -1,108 +1,91 @@
+// src/stores/userStore.js
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import API from '../lib/api'
+import { logger } from '@/lib/logger'
 
-export const useUserStore = defineStore('user', () => {
-  const user = ref(null)
-  const isAuthenticated = ref(false)
+export const useUserStore = defineStore('user', {
+  state: () => ({
+    user: null,
+    token: null,
+    isAuthenticated: false
+  }),
 
-  const setUser = (userData) => {
-    user.value = userData
-    isAuthenticated.value = true
-    localStorage.setItem('auth_user', JSON.stringify(userData))
+  getters: {
+    userRoles: (state) => {
+      return state.user?.roles?.map(role => role.name) || []
+    },
     
-    console.log('✅ User set in store:', userData.username, 'Role:', userData.roles?.[0]?.name)
-    console.log('🎭 All roles:', userData.roles)
-  }
+    // ✅ FIX: Use this.userRoles instead of state.userRoles
+    isAdmin() {
+      return this.userRoles.includes('admin')
+    },
+    
+    isManager() {
+      return this.userRoles.includes('manager')
+    },
+    
+    isUser() {
+      return this.userRoles.includes('user')
+    }
+  },
 
-  const loadUserFromStorage = () => {
-    const saved = localStorage.getItem('auth_user')
-    if (saved) {
+  actions: {
+    setUser(userData) {
+      logger.info('UserStore: Setting user data', { 
+        username: userData.username,
+        roles: userData.roles?.map(r => r.name)
+      })
+      
+      this.user = userData
+      this.isAuthenticated = true
+      localStorage.setItem('auth_user', JSON.stringify(userData))
+    },
+
+    setToken(token) {
+      // ✅ FIX: logger.auth.tokenSet doesn't exist in your logger
+      logger.info('UserStore: Token set')
+      this.token = token
+      localStorage.setItem('auth_token', token)
+    },
+
+    clearUser() {
+      logger.auth.logout()
+      this.user = null
+      this.token = null
+      this.isAuthenticated = false
+      
+      localStorage.removeItem('auth_user')
+      localStorage.removeItem('auth_token')
+    },
+
+    loadUserFromStorage() {
       try {
-        const userData = JSON.parse(saved)
-        user.value = userData
-        isAuthenticated.value = true
-        console.log('📦 User loaded from storage:', userData.username, 'Role:', userData.roles?.[0]?.name)
+        const storedUser = localStorage.getItem('auth_user')
+        const storedToken = localStorage.getItem('auth_token')
         
-        // ✅ PERBAIKI: Validate session tapi jangan block UI
-        validateSession().catch(() => {
-          // Session invalid, tapi jangan langsung clear user
-          console.log('⚠️ Session validation failed, but keeping user data for now')
-        })
-      } catch (e) {
-        console.error('❌ Error loading user from storage:', e)
-        clearUser()
+        if (storedUser && storedToken) {
+          this.user = JSON.parse(storedUser)
+          this.token = storedToken
+          this.isAuthenticated = true
+          
+          logger.info('UserStore: Loaded user from storage', { 
+            username: this.user.username,
+            hasToken: !!this.token
+          })
+          return true
+        }
+      } catch (error) {
+        logger.error('UserStore: Failed to load user from storage', error)
+        this.clearUser()
       }
-    }
-  }
-
-  const validateSession = async () => {
-    console.log('🔍 Validating session...')
-    try {
-      const response = await API.get('/api/v1/users')
-      console.log('✅ Session valid')
-      isAuthenticated.value = true
-      return true
-    } catch (error) {
-      console.error('❌ Session validation failed:', error)
-      
-      // ✅ PERBAIKI: Clear user data jika session expired
-      if (error.response?.status === 401) {
-        console.log('🧹 Session expired, clearing user data')
-        clearUser()
-        // Redirect akan ditangani oleh API interceptor
-      }
-      
-      isAuthenticated.value = false
       return false
+    },
+
+    hasRole(role) {
+      return this.userRoles.includes(role)
+    },
+
+    hasAnyRole(roles) {
+      return roles.some(role => this.userRoles.includes(role))
     }
-  }
-
-  const clearUser = () => {
-    console.log('🧹 Clearing user data')
-    user.value = null
-    isAuthenticated.value = false
-    localStorage.removeItem('auth_user')
-  }
-
-  // ✅ Computed properties untuk role checking
-  const userRoles = computed(() => {
-    return user.value?.roles?.map(role => role.name) || []
-  })
-
-  const isAdmin = computed(() => {
-    return userRoles.value.includes('admin')
-  })
-
-  const isManager = computed(() => {
-    return userRoles.value.includes('manager')
-  })
-
-  const isUser = computed(() => {
-    return userRoles.value.includes('user')
-  })
-
-  // ✅ Helper function untuk check role
-  const hasRole = (roleName) => {
-    return userRoles.value.includes(roleName)
-  }
-
-  return {
-    // State
-    user,
-    isAuthenticated,
-    
-    // Computed
-    userRoles,
-    isAdmin,
-    isManager,
-    isUser,
-    
-    // Actions
-    setUser,
-    loadUserFromStorage,
-    validateSession,
-    clearUser,
-    hasRole
   }
 })

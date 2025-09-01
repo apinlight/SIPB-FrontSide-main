@@ -41,7 +41,7 @@ const logger = {
     }
   },
   
-  // Auth specific logging (never log sensitive data)
+  // Auth specific logging
   auth: {
     login: (username) => {
       if (isDev) console.log('🔐 Login attempt for:', username)
@@ -55,9 +55,18 @@ const logger = {
       if (isDev) console.log('🔄 Token refreshed')
     },
     
-    // Never log actual tokens or passwords
+    // ✅ Add token logging
+    tokenAttached: () => {
+      if (isDev) console.log('🎟️ Bearer token attached to request')
+    },
+    
+    tokenExpired: () => {
+      if (isDev) console.log('⏰ Token expired')
+    },
+    
+    // ✅ Add missing methods
     csrfToken: () => {
-      if (isDev) console.log('🔑 CSRF token obtained')
+      if (isDev) console.log('🛡️ CSRF token attached')
     }
   }
 }

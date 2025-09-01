@@ -259,7 +259,12 @@ const fetchData = async (page = 1) => {
     branches.value = uniqueBranches
   } catch (e) {
     logger.error('Failed to load pengajuan data:', e.response?.data?.message || e.message)
-    toast.error('Gagal memuat data pengajuan')
+    
+    // ✅ Set empty data on error to prevent crashes
+    pengajuanList.value = []
+    branches.value = []
+    
+    toast.error(`Backend Error: ${e.response?.data?.message || e.message}`)
   } finally {
     loading.value = false
   }
@@ -295,30 +300,49 @@ const handleTambahKeGudang = async (pengajuan) => {
 
   processing.value = true
   try {
-    // Get detail pengajuan if not already loaded
     let detailList = pengajuan.details
     if (!detailList) {
       const { data } = await API.get(`/detail-pengajuan?id_pengajuan=${pengajuan.id_pengajuan}`)
       detailList = data.data
     }
 
-    // Add each item to gudang
-    for (const item of detailList) {
-      await API.post('/gudang', {
-        unique_id: pengajuan.unique_id,
-        id_barang: item.id_barang,
-        jumlah_barang: item.jumlah
+    // Transaction-like error handling
+    const successfulItems = []
+    
+    try {
+      for (const item of detailList) {
+        await API.post('/gudang', {
+          unique_id: pengajuan.unique_id,
+          id_barang: item.id_barang,
+          jumlah_barang: item.jumlah
+        })
+        successfulItems.push(item)
+      }
+
+      // Update status only if all items succeed
+      await API.put(`/pengajuan/${pengajuan.id_pengajuan}`, {
+        status_pengajuan: 'Selesai'
       })
+
+      toast.success(`Barang dari pengajuan ${pengajuan.id_pengajuan} berhasil ditambahkan ke gudang`)
+      closeDetail()
+      await fetchData(pagination.value.current_page)
+      
+    } catch (itemError) {
+      // Rollback successful items if something fails
+      logger.error('Failed to add item to gudang, attempting rollback:', itemError)
+      
+      for (const successItem of successfulItems) {
+        try {
+          await API.delete(`/gudang/${pengajuan.unique_id}/${successItem.id_barang}`)
+        } catch (rollbackError) {
+          logger.error('Rollback failed for item:', successItem.id_barang, rollbackError)
+        }
+      }
+      
+      throw itemError
     }
-
-    // Update status to 'Selesai'
-    await API.put(`/pengajuan/${pengajuan.id_pengajuan}`, {
-      status_pengajuan: 'Selesai'
-    })
-
-    toast.success(`Barang dari pengajuan ${pengajuan.id_pengajuan} berhasil ditambahkan ke gudang`)
-    closeDetail()
-    await fetchData(pagination.value.current_page)
+    
   } catch (e) {
     logger.error('Failed to add items to gudang:', e.response?.data?.message || e.message)
     const errorMsg = e.response?.data?.message || 'Gagal menambahkan barang ke gudang'

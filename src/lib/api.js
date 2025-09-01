@@ -1,18 +1,11 @@
+// src/lib/api.js
 import axios from 'axios'
 import { logger } from './logger'
 
-// Helper function to get cookie
-function getCookie(name) {
-  const value = `; ${document.cookie}`
-  const parts = value.split(`; ${name}=`)
-  if (parts.length === 2) return parts.pop().split(';').shift()
-  return null
-}
-
-// Create main axios instance
+// Create main axios instance for stateless auth
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'https://sipb.crulxproject.com',
-  withCredentials: true,
+  withCredentials: false, // ✅ No cookies needed for stateless
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json',
@@ -20,34 +13,29 @@ const API = axios.create({
   }
 })
 
-// Request interceptor with logger
+// ✅ Request interceptor - Add Bearer token
 API.interceptors.request.use(
   config => {
     logger.api.request(config.method, config.url)
     
-    // ✅ Fix: Add /api/v1 prefix to all API calls except auth and sanctum
-    if (!config.url.startsWith('/sanctum') && 
-        !config.url.startsWith('/api/login') && 
+    // ✅ Add Bearer token if available
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+      logger.auth.tokenAttached()
+    }
+    
+    // ✅ Add /api/v1 prefix to all API calls except auth
+    if (!config.url.startsWith('/api/login') && 
         !config.url.startsWith('/api/register') && 
         !config.url.startsWith('/api/forgot-password') && 
-        !config.url.startsWith('/api/reset-password')) {
+        !config.url.startsWith('/api/reset-password') && 
+        !config.url.startsWith('/api/refresh-token') &&
+        !config.url.startsWith('/api/logout')) {
       
       if (!config.url.startsWith('/api/v1')) {
         config.url = '/api/v1' + config.url
       }
-    }
-    
-    // Add XSRF-TOKEN if available
-    const token = getCookie('XSRF-TOKEN')
-    if (token) {
-      config.headers['X-XSRF-TOKEN'] = decodeURIComponent(token)
-      logger.auth.csrfToken()
-    }
-
-    // Check for session cookie
-    const sessionCookie = getCookie('laravel_session') || getCookie('sipb_session')
-    if (!sessionCookie) {
-      logger.warn('No session cookie found')
     }
 
     return config
@@ -58,13 +46,15 @@ API.interceptors.request.use(
   }
 )
 
-// Response interceptor to handle common errors
+// ✅ Response interceptor - Handle token refresh
 API.interceptors.response.use(
   response => {
     logger.api.response(response.config.method, response.config.url, response.status)
     return response
   },
-  error => {
+  async error => {
+    const originalRequest = error.config
+    
     logger.api.error(
       error.config?.method,
       error.config?.url,
@@ -72,12 +62,24 @@ API.interceptors.response.use(
       error.response?.data?.message || error.message
     )
     
-    if (error.response?.status === 401) {
-      logger.warn('Unauthorized, redirecting to login')
-      window.location.href = '/'
-    } else if (error.response?.status === 405) {
-      logger.error('Method not allowed. Check API endpoint:', error.config.url)
+    // ✅ Handle token expiration
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true
+      
+      logger.auth.tokenExpired()
+      
+      // Clear auth data and redirect to login
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('auth_user')
+      
+      // Redirect to login page
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
+      
+      return Promise.reject(error)
     }
+    
     return Promise.reject(error)
   }
 )

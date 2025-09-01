@@ -69,13 +69,26 @@ const resetForm = () => {
   editItem.value = null
 }
 
+// ✅ FIX: Add null validation
 const handleEdit = (item) => {
+  // Add validation checks
+  if (!item) {
+    logger.error('Shared: Attempted to edit null/undefined item')
+    return
+  }
+  
   if (!userStore.isAdmin) {
     logger.warn('Shared: Non-admin user attempted to edit barang', {
       user: userStore.user?.username,
       roles: userStore.userRoles,
       itemId: item?.id_barang
     })
+    return
+  }
+  
+  // Additional validation for required item properties
+  if (!item.id_barang) {
+    logger.error('Shared: Item missing required id_barang property', { item })
     return
   }
   

@@ -42,31 +42,13 @@
 </template>
   
 <script setup>
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import { useUserStore } from '@/stores/userStore' // ✅ Direct import
 
-// ✅ SIMPLIFIED: Use direct store import instead of complex auth guard
-const userStore = ref(null)
+// ✅ SIMPLIFIED: No need for useAuthGuard anymore
+const userStore = useUserStore()
 
-onMounted(async () => {
-  try {
-    // Dynamic import to ensure Pinia is ready
-    const { useUserStore } = await import('@/stores/userStore')
-    userStore.value = useUserStore()
-    
-    // Load user from storage
-    userStore.value.loadUserFromStorage()
-    
-    // Check if user is authenticated, redirect if not
-    if (!userStore.value.isAuthenticated) {
-      const { useRouter } = await import('vue-router')
-      const router = useRouter()
-      router.push('/')
-    }
-    
-  } catch (error) {
-    console.error('Failed to initialize dashboard:', error)
-    window.location.href = '/'
-  }
-})
+// ✅ No need for complex auth checking - router guard handles it!
 </script>
+

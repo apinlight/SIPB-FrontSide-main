@@ -1,107 +1,185 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/stores/userStore'
+import { toast } from 'vue3-toastify'
 
-// ✅ FIX: Use simpler dynamic imports to avoid 500 errors
+// Import route modules
+import { authRoutes } from './auth'
+import { dashboardRoutes } from './dashboard'
+import { penggunaanRoutes } from './penggunaan'
+
+// Combine all routes
 const routes = [
   {
     path: '/',
-    component: () => import('../pages/shared/Login.vue'),
-    meta: { requiresAuth: false }
+    redirect: '/dashboard'
   },
-  {
-    path: '/dashboard',
-    component: () => import('../pages/shared/Dashboard.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/daftar-barang',
-    component: () => import('../pages/shared/DaftarBarang.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/laporan',
-    name: 'LaporanPengadaan',
-    component: () => import('../pages/shared/LaporanPengadaan.vue'),
-    meta: { requiresAuth: true }
-  },
-  // Admin routes
+  ...authRoutes,
+  ...dashboardRoutes,
+  ...penggunaanRoutes,
+  
+  // Additional routes that weren't in modules
   {
     path: '/admin/pengadaan-disetujui',
     name: 'PengadaanDisetujui',
-    component: () => import('../pages/admin/PengadaanDisetujui.vue'),
-    meta: { requiresAuth: true, roles: ['admin'] }
+    component: () => import('@/pages/admin/PengadaanDisetujui.vue'),
+    meta: { 
+      requiresAuth: true, 
+      requiresRole: ['admin'],
+      title: 'Pengadaan Disetujui'
+    }
   },
   {
     path: '/admin/pengadaan-manual',
     name: 'PengadaanManual',
-    component: () => import('../pages/admin/PengadaanManual.vue'),
-    meta: { requiresAuth: true, roles: ['admin'] }
+    component: () => import('@/pages/admin/PengadaanManual.vue'),
+    meta: { 
+      requiresAuth: true, 
+      requiresRole: ['admin'],
+      title: 'Pengadaan Manual'
+    }
   },
   {
     path: '/admin/persetujuan',
     name: 'PersetujuanPengadaan',
-    component: () => import('../pages/admin/PersetujuanPengadaan.vue'),
-    meta: { requiresAuth: true, roles: ['admin'] }
+    component: () => import('@/pages/admin/PersetujuanPengadaan.vue'),
+    meta: { 
+      requiresAuth: true, 
+      requiresRole: ['admin'],
+      title: 'Persetujuan Pengadaan'
+    }
   },
-  // User routes
   {
     path: '/user/pengajuan',
     name: 'PengajuanBarang',
-    component: () => import('../pages/user/PengajuanBarang.vue'),
-    meta: { requiresAuth: true, roles: ['user'] }
+    component: () => import('@/pages/user/PengajuanBarang.vue'),
+    meta: { 
+      requiresAuth: true, 
+      requiresRole: ['user'],
+      title: 'Pengajuan Barang'
+    }
   },
-  {
-    path: '/user/riwayat',
-    name: 'RiwayatPengajuan',
-    component: () => import('../pages/user/RiwayatPengajuan.vue'),
-    meta: { requiresAuth: true, roles: ['user'] }
-  },
-  // Manager routes
   {
     path: '/manager/riwayat-cabang',
     name: 'RiwayatCabang',
-    component: () => import('../pages/manager/RiwayatCabang.vue'),
-    meta: { requiresAuth: true, roles: ['manager'] }
+    component: () => import('@/pages/manager/RiwayatCabang.vue'),
+    meta: { 
+      requiresAuth: true, 
+      requiresRole: ['manager'],
+      title: 'Riwayat Cabang'
+    }
   },
-  // Management routes
   {
     path: '/users',
     name: 'Users',
-    component: () => import('../pages/Users.vue'),
-    meta: { requiresAuth: true, roles: ['admin'] }
+    component: () => import('@/pages/Users.vue'),
+    meta: { 
+      requiresAuth: true, 
+      requiresRole: ['admin'],
+      title: 'Kelola Users'
+    }
   },
   {
     path: '/jenis-barang',
     name: 'JenisBarang',
-    component: () => import('../pages/JenisBarang.vue'),
-    meta: { requiresAuth: true, roles: ['admin'] }
+    component: () => import('@/pages/JenisBarang.vue'),
+    meta: { 
+      requiresAuth: true, 
+      requiresRole: ['admin'],
+      title: 'Jenis Barang'
+    }
   },
   {
     path: '/batas-barang',
     name: 'BatasBarang',
-    component: () => import('../pages/BatasBarang.vue'),
-    meta: { requiresAuth: true, roles: ['admin'] }
+    component: () => import('@/pages/BatasBarang.vue'),
+    meta: { 
+      requiresAuth: true, 
+      requiresRole: ['admin'],
+      title: 'Batas Barang'
+    }
   },
   {
     path: '/batas-pengajuan',
     name: 'BatasPengajuan',
-    component: () => import('../pages/BatasPengajuan.vue'),
-    meta: { requiresAuth: true, roles: ['admin'] }
+    component: () => import('@/pages/BatasPengajuan.vue'),
+    meta: { 
+      requiresAuth: true, 
+      requiresRole: ['admin'],
+      title: 'Batas Pengajuan'
+    }
   },
+  
+  // 404 fallback
   {
     path: '/:pathMatch(.*)*',
-    redirect: '/'
+    name: 'NotFound',
+    component: () => import('@/pages/NotFound.vue'),
+    meta: {
+      title: '404 - Halaman Tidak Ditemukan'
+    }
   }
 ]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { top: 0 }
+    }
+  }
 })
 
-// ✅ Optional: Add navigation guards if needed
-// router.beforeEach((to, from, next) => {
-//   // Add auth logic here if needed
-//   next()
-// })
+// Navigation guards
+router.beforeEach(async (to, from, next) => {
+  const userStore = useUserStore()
+  
+  // Set page title
+  if (to.meta.title) {
+    document.title = `${to.meta.title} - SIPB`
+  }
+  
+  // Check if route requires authentication
+  if (to.meta.requiresAuth) {
+    if (!userStore.isAuthenticated) {
+      // Try to load user from storage first
+      const loaded = userStore.loadUserFromStorage()
+      
+      if (!loaded) {
+        toast.error('Silakan login terlebih dahulu')
+        next({
+          name: 'Login',
+          query: { redirect: to.fullPath }
+        })
+        return
+      }
+    }
+    
+    // Check role-based access
+    if (to.meta.requiresRole) {
+      const requiredRoles = Array.isArray(to.meta.requiresRole) 
+        ? to.meta.requiresRole 
+        : [to.meta.requiresRole]
+      
+      const hasRequiredRole = requiredRoles.some(role => userStore.hasRole(role))
+      
+      if (!hasRequiredRole) {
+        toast.error('Anda tidak memiliki akses ke halaman ini')
+        next({ name: 'Dashboard' })
+        return
+      }
+    }
+  }
+  
+  // Redirect authenticated users away from auth pages
+  if (to.meta.requiresGuest && userStore.isAuthenticated) {
+    next({ name: 'Dashboard' })
+    return
+  }
+  
+  next()
+})
 
 export default router

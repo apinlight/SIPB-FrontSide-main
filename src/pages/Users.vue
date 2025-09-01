@@ -22,6 +22,7 @@ const form = ref({
   username: '',
   email: '',
   password: '',
+  password_confirmation: '',
   branch_name: '',
   role: ''
 })
@@ -305,7 +306,7 @@ onMounted(() => {
               <label class="block text-sm font-medium mb-2">Password</label>
               <input
                 v-model="form.password"
-                type="password"
+                type="password" && "password_confirmation"
                 class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Masukkan password"
                 :required="!editMode"
@@ -428,7 +429,7 @@ onMounted(() => {
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span :class="getRoleBadgeClass(user.roles?.[0])" class="px-2 py-1 text-xs font-medium rounded-full">
-                  {{ user.roles?.[0] || 'No Role' }}
+                  {{ user.roles?.[0].name || 'No Role' }}
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">

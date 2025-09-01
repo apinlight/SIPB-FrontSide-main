@@ -298,21 +298,46 @@ const fetchData = async () => {
 
     logger.info('Shared: Fetching laporan data', { params })
 
-    // Fetch summary
-    const summaryRes = await API.get('/laporan/summary', { params })
-    summary.value = summaryRes.data.data
-
-    // Fetch laporan barang
-    const barangRes = await API.get('/laporan/barang', { params })
-    laporanBarang.value = barangRes.data.data
-
-    // Fetch laporan pengajuan
-    const pengajuanRes = await API.get('/laporan/pengajuan', { params })
-    laporanPengajuan.value = pengajuanRes.data.data
-
-    // Fetch laporan cabang
-    const cabangRes = await API.get('/laporan/cabang', { params })
-    laporanCabang.value = cabangRes.data.data
+    // Since the API only has export endpoints, we'll use pengajuan data to build summaries
+    const pengajuanRes = await API.get('/pengajuan', { params })
+    const allPengajuan = pengajuanRes.data.data || []
+    
+    // Build summary from pengajuan data
+    summary.value = {
+      total_pengajuan: allPengajuan.length,
+      total_disetujui: allPengajuan.filter(p => p.status_pengajuan === 'Disetujui').length,
+      total_menunggu: allPengajuan.filter(p => p.status_pengajuan === 'Menunggu Persetujuan').length,
+      total_nilai: allPengajuan.reduce((sum, p) => sum + (p.total_nilai || 0), 0)
+    }
+    
+    // Use pengajuan data for laporan
+    laporanPengajuan.value = allPengajuan
+    
+    // Get barang data for laporan barang
+    const barangRes = await API.get('/barang', { params })
+    laporanBarang.value = barangRes.data.data || []
+    
+    // Build branch summary from pengajuan data
+    const branchSummary = {}
+    allPengajuan.forEach(p => {
+      const branch = p.user?.branch_name || 'Unknown'
+      if (!branchSummary[branch]) {
+        branchSummary[branch] = {
+          branch_name: branch,
+          total_pengajuan: 0,
+          total_disetujui: 0,
+          total_menunggu: 0,
+          total_ditolak: 0,
+          total_nilai: 0
+        }
+      }
+      branchSummary[branch].total_pengajuan++
+      if (p.status_pengajuan === 'Disetujui') branchSummary[branch].total_disetujui++
+      if (p.status_pengajuan === 'Menunggu Persetujuan') branchSummary[branch].total_menunggu++
+      if (p.status_pengajuan === 'Ditolak') branchSummary[branch].total_ditolak++
+      branchSummary[branch].total_nilai += (p.total_nilai || 0)
+    })
+    laporanCabang.value = Object.values(branchSummary)
 
     // Extract branches
     const uniqueBranches = [...new Set(laporanPengajuan.value.map(p => p.user?.branch_name).filter(Boolean))]
@@ -329,7 +354,10 @@ const fetchData = async () => {
     logger.error('Shared: Failed to fetch laporan data', {
       error: e.message,
       response: e.response?.data,
-      params
+      period: periodFilter.value,  // ✅ Use actual variables
+      branch: branchFilter.value,
+      start_date: startDate.value,
+      end_date: endDate.value
     })
     const errorMsg = e.response?.data?.message || 'Gagal memuat laporan'
     toast.error(errorMsg)
@@ -348,14 +376,17 @@ const exportData = async () => {
       period: periodFilter.value,
       branch: branchFilter.value || undefined,
       start_date: startDate.value || undefined,
-      end_date: endDate.value || undefined,
-      format: 'excel'
+      end_date: endDate.value || undefined
     }
 
     logger.info('Shared: Exporting laporan data', { params })
 
+    // Try legacy export endpoint with type parameter (from API documentation)
     const response = await API.get('/laporan/export', { 
-      params,
+      params: {
+        ...params,
+        type: 'summary'
+      },
       responseType: 'blob'
     })
 
@@ -374,9 +405,19 @@ const exportData = async () => {
   } catch (e) {
     logger.error('Shared: Failed to export laporan', {
       error: e.message,
+      status: e.response?.status,
       response: e.response?.data
     })
-    const errorMsg = e.response?.data?.message || 'Gagal export laporan'
+    
+    let errorMsg = 'Gagal export laporan'
+    if (e.response?.status === 500) {
+      errorMsg = 'Server error saat export laporan. Coba lagi nanti.'
+    } else if (e.response?.status === 403) {
+      errorMsg = 'Tidak memiliki izin untuk export laporan'
+    } else if (e.response?.data?.message) {
+      errorMsg = e.response.data.message
+    }
+    
     toast.error(errorMsg)
   }
 }

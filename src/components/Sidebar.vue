@@ -37,37 +37,62 @@ const allMenu = [
     name: 'Dashboard', 
     path: '/dashboard',
     emoji: '🏠',
-    roles: ['admin', 'manager', 'user'] // All roles can access
+    roles: ['admin', 'manager', 'user']
   },
   {
     name: 'Pengadaan',
     emoji: '📦',
     roles: ['admin', 'manager', 'user'],
     children: [
-      { name: 'Daftar Barang', path: '/daftar-barang', emoji: '📥', roles: ['admin'] },
-      { name: 'Riwayat', path: '/pengadaan-riwayat', emoji: '🕘', roles: ['admin', 'manager', 'user'] }
+      { name: 'Daftar Barang', path: '/daftar-barang', emoji: '📥', roles: ['admin', 'manager', 'user'] },
+      { name: 'Pengajuan Barang', path: '/user/pengajuan', emoji: '📝', roles: ['user'] },
+      { name: 'Riwayat Pengajuan', path: '/user/riwayat', emoji: '🕘', roles: ['admin', 'manager', 'user'] },
+      { name: 'Persetujuan Pengadaan', path: '/admin/persetujuan', emoji: '✅', roles: ['admin'] },
+      { name: 'Pengadaan Disetujui', path: '/admin/pengadaan-disetujui', emoji: '📋', roles: ['admin'] },
+      { name: 'Pengadaan Manual', path: '/admin/pengadaan-manual', emoji: '✏️', roles: ['admin'] }
     ]
   },
-  { 
-    name: 'Laporan', 
-    path: '/laporan',
-    emoji: '📊',
-    roles: ['admin', 'manager']
+  {
+    name: 'Penggunaan Barang',
+    emoji: '🔧',
+    roles: ['admin', 'manager', 'user'],
+    children: [
+      { name: 'Kelola Penggunaan', path: '/penggunaan-barang', emoji: '📋', roles: ['user'] },
+      { name: 'Stok Tersedia', path: '/stok-tersedia', emoji: '📊', roles: ['admin', 'manager', 'user'] }
+    ]
+  },
+  {
+    name: 'Laporan',
+    emoji: '📈',
+    roles: ['admin', 'manager'],
+    children: [
+      { name: 'Laporan Pengadaan', path: '/laporan', emoji: '📊', roles: ['admin'] },
+      { name: 'Riwayat Cabang', path: '/manager/riwayat-cabang', emoji: '🏢', roles: ['manager'] }
+    ]
+  },
+  {
+    name: 'Administrasi',
+    emoji: '⚙️',
+    roles: ['admin'],
+    children: [
+      { name: 'Kelola Users', path: '/users', emoji: '👥', roles: ['admin'] },
+      { name: 'Jenis Barang', path: '/jenis-barang', emoji: '🏷️', roles: ['admin'] },
+      { name: 'Batas Barang', path: '/batas-barang', emoji: '⚠️', roles: ['admin'] },
+      { name: 'Batas Pengajuan', path: '/batas-pengajuan', emoji: '📊', roles: ['admin'] }
+    ]
   }
 ]
 
-// ✅ Filter menu based on user roles
+// Filter menu based on user roles
 const filteredMenu = computed(() => {
   if (!userStore.user || !userStore.userRoles.length) {
-    return [] // No menu if no user or roles
+    return []
   }
 
   return allMenu.filter(item => {
-    // Check if user has any of the required roles for this menu item
     const hasAccess = item.roles.some(role => userStore.hasRole(role))
     
     if (hasAccess && item.children) {
-      // Filter children based on roles too
       item.children = item.children.filter(child => 
         child.roles.some(role => userStore.hasRole(role))
       )

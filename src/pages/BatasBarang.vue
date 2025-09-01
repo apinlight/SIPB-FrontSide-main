@@ -256,7 +256,8 @@ const fetchData = async (page = 1) => {
     const params = {
       page,
       search: search.value || undefined,
-      status: statusFilter.value || undefined
+      status: statusFilter.value || undefined,
+      with: 'barang.jenis_barang' // ✅ Request related barang data
     }
     
     const response = await API.get('/batas-barang', { params })
@@ -278,7 +279,9 @@ const fetchData = async (page = 1) => {
 const fetchBarang = async () => {
   logger.debug('Fetching barang data for batas barang')
   try {
-    const response = await API.get('/barang')
+    const response = await API.get('/barang', { 
+      params: { with: 'jenis_barang' } // ✅ Request related jenis data
+    })
     barangList.value = response.data.data
     logger.success('Barang data loaded for batas barang', { count: barangList.value.length })
   } catch (error) {
@@ -382,13 +385,27 @@ const changePage = (page) => {
   }
 }
 
-const getCurrentStock = (idBarang) => {
-  // Sum all stock for this barang from gudang data
-  const stocks = gudangData.value.filter(item => item.id_barang === idBarang)
-  const totalStock = stocks.reduce((total, item) => total + (item.jumlah_barang || 0), 0)
+// ✅ Memoized stock calculations to prevent performance issues
+const stockCache = computed(() => {
+  const cache = {}
+  // ✅ Add safeguard against excessive data
+  if (gudangData.value.length > 10000) {
+    logger.warn('Large gudang dataset detected', { count: gudangData.value.length })
+  }
   
-  logger.debug('Calculated current stock', { id_barang: idBarang, stock: totalStock })
-  return totalStock
+  gudangData.value.forEach(item => {
+    if (!cache[item.id_barang]) {
+      cache[item.id_barang] = 0
+    }
+    cache[item.id_barang] += (item.jumlah_barang || 0)
+  })
+  return cache
+})
+
+const getCurrentStock = (idBarang) => {
+  const stock = stockCache.value[idBarang] || 0
+  logger.debug('Getting current stock from cache', { id_barang: idBarang, stock })
+  return stock
 }
 
 const getStatusText = (item) => {

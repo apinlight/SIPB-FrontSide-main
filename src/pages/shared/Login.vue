@@ -1,15 +1,16 @@
+<!-- src/pages/shared/Login.vue -->
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-100">
     <div class="w-full max-w-sm bg-white p-6 rounded shadow">
       <h2 class="text-2xl font-bold mb-4">Login</h2>
       <form @submit.prevent="loginActivity">
         <div class="mb-4">
-          <label class="block text-gray-700">Username</label>
+          <label class="block text-gray-700">Username or Email</label>
           <input 
             v-model="username" 
             type="text" 
             name="username"
-            placeholder="username"
+            placeholder="username or email"
             class="w-full px-3 py-2 border rounded" 
             required 
           />
@@ -53,62 +54,23 @@ const username = ref('')
 const password = ref('')
 const errorMsg = ref('')
 
-// ✅ PERBAIKI: Check auth dengan lebih hati-hati
-onMounted(async () => {
-  logger.info('Shared: Login component mounted')
+onMounted(() => {
+  logger.info('Shared: Login component mounted (stateless)')
   
-  // ✅ Clear any existing redirect flags
-  localStorage.removeItem('auth_user') // Clear potentially invalid session
+  // ✅ Clear any existing auth data
+  userStore.clearUser()
   
-  // Don't auto-redirect, let user login fresh
   logger.info('Shared: Login page ready')
 })
-
-// ... rest of the functions remain the same
-async function getCsrfCookie() {
-  try {
-    logger.info('Shared: Getting CSRF cookie')
-    document.cookie = 'XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-    await API.get('/sanctum/csrf-cookie')
-    await new Promise(resolve => setTimeout(resolve, 300))
-    
-    const token = getCookie('XSRF-TOKEN')
-    if (!token) {
-      throw new Error('CSRF token not set')
-    }
-    logger.info('Shared: CSRF cookie obtained successfully')
-    return true
-  } catch (error) {
-    logger.error('Shared: Failed to get CSRF cookie', {
-      error: error.message
-    })
-    errorMsg.value = 'Failed to establish secure connection'
-    return false
-  }
-}
-
-function getCookie(name) {
-  const value = `; ${document.cookie}`
-  const parts = value.split(`; ${name}=`)
-  if (parts.length === 2) {
-    return parts.pop().split(';').shift()
-  }
-  return null
-}
 
 async function loginActivity() {
   loading.value = true
   errorMsg.value = ''
   
-  logger.info('Shared: Starting login process', { username: username.value })
+  logger.info('Shared: Starting stateless login', { username: username.value })
   
   try {
-    const csrfSuccess = await getCsrfCookie()
-    if (!csrfSuccess) {
-      loading.value = false
-      return
-    }
-
+    // ✅ Stateless login
     const response = await API.post('/api/login', {
       login: username.value,
       password: password.value,
@@ -117,10 +79,13 @@ async function loginActivity() {
     logger.info('Shared: Login successful', {
       user: response.data.user?.username,
       branch: response.data.user?.branch_name,
-      roles: response.data.user?.roles?.map(r => r.name)
+      roles: response.data.user?.roles?.map(r => r.name),
+      tokenType: response.data.token_type
     })
     
+    // ✅ Store user and token
     userStore.setUser(response.data.user)
+    userStore.setToken(response.data.token)
     
     toast.success('Login successful!')
     router.push('/dashboard')

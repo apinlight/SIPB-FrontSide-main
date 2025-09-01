@@ -73,8 +73,9 @@ import API from '@/lib/api'
 import { logger } from '@/lib/logger'
 import { toast } from 'vue3-toastify'
 import BaseButton from './BaseButton.vue'
+// ✅ FIX: Add missing userStore import
+import { useUserStore } from '@/stores/userStore'
 
-// ✅ FIX: Add missing props
 const props = defineProps({
   canEdit: {
     type: Boolean,
@@ -87,6 +88,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['edit', 'saved'])
+// ✅ FIX: Initialize userStore
+const userStore = useUserStore()
 const barangList = ref([])
 const search = ref('')
 const isLoading = ref(false)
@@ -104,12 +107,16 @@ const fetchBarang = async () => {
   isLoading.value = true
   try {
     logger.debug('Fetching barang data...')
+    logger.debug('Current user:', userStore?.user?.username)
+    logger.debug('User authenticated:', userStore?.isAuthenticated)
+    
     const res = await API.get('/barang', {
       params: {
         page: currentPage.value,
         search: search.value || undefined
       }
     })
+    
     logger.success('Barang data loaded successfully')
     barangList.value = res.data.data
     
@@ -118,7 +125,13 @@ const fetchBarang = async () => {
     }
   } catch (err) {
     logger.error('Failed to fetch barang:', err.response?.data?.message || err.message)
-    toast.error('Gagal mengambil barang')
+    
+    if (err.response?.status === 401) {
+      logger.error('Authentication failed - user may need to login again')
+      toast.error('Session expired. Please login again.')
+    } else {
+      toast.error('Gagal mengambil barang')
+    }
   } finally {
     isLoading.value = false
   }
@@ -130,14 +143,17 @@ const handleSearch = () => {
 }
 
 const changePage = (page) => {
-  if (page >= 1 && page <= pagination.value.last_page) {
+  if (page >= 1 && page <= pagination.value.last_page && page !== currentPage.value) {
     currentPage.value = page
     fetchBarang()
   }
 }
 
 const confirmDelete = async (barang) => {
-  if (!props.canEdit) return
+  if (!props.canEdit) {
+    toast.warning('Anda tidak memiliki izin untuk menghapus')
+    return
+  }
   
   if (!confirm(`Yakin ingin menghapus barang "${barang.nama_barang}"?`)) return
 

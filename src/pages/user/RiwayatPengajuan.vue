@@ -208,14 +208,15 @@ const pagination = ref({
 
 const fetchData = async (page = 1) => {
   loading.value = true
+  
+  const params = {
+    page,
+    search: search.value || undefined,
+    status: statusFilter.value || undefined,
+    user_id: userStore.user.unique_id // Filter by current user
+  }
+
   try {
-    const params = {
-      page,
-      search: search.value || undefined,
-      status: statusFilter.value || undefined,
-      user_id: userStore.user.unique_id // Filter by current user
-    }
-    
     logger.info('User: Fetching riwayat pengajuan', {
       params,
       user: userStore.user?.username,
@@ -223,10 +224,16 @@ const fetchData = async (page = 1) => {
     })
     
     const res = await API.get('/pengajuan', { params })
-    pengajuanList.value = res.data.data
     
-    if (res.data.meta) {
-      pagination.value = res.data.meta
+    // ✅ Handle different response structures
+    if (res.data.success) {
+      pengajuanList.value = res.data.data || []
+      if (res.data.meta) {
+        pagination.value = res.data.meta
+      }
+    } else {
+      // Fallback for direct data array
+      pengajuanList.value = Array.isArray(res.data) ? res.data : res.data.data || []
     }
     
     logger.info('User: Riwayat pengajuan loaded successfully', {
@@ -242,8 +249,12 @@ const fetchData = async (page = 1) => {
       params,
       user: userStore.user?.username
     })
+    
+    // ✅ Set empty data on error to prevent crashes
+    pengajuanList.value = []
+    
     const errorMsg = e.response?.data?.message || 'Gagal memuat riwayat pengajuan'
-    toast.error(errorMsg)
+    toast.error(`Backend Error: ${errorMsg}`)
   } finally {
     loading.value = false
   }

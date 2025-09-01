@@ -1,15 +1,15 @@
-aPS D:\KULAIH\ALL_PROJECT\KP_SistemInformasidanPencatatanBarang\frontend> tree SIPB-FrontSide-main /f
+PS D:\KULAIH\ALL_PROJECT\KP_SistemInformasidanPencatatanBarang\frontend\SIPB-FrontSide-main> tree /f
 Folder PATH listing for volume CRULDRIVE_DAVE
 Volume serial number is BC61-5356
-D:\KULAIH\ALL_PROJECT\KP_SISTEMINFORMASIDANPENCATATANBARANG\FRONTEND\SIPB-FRONTSIDE-MAIN
+D:.
 │   .env
 │   .env.development
 │   .gitignore
+│   hierarki.txt
 │   index.html
 │   package-lock.json
 │   package.json
 │   postcss.config.js
-│   README.md
 │   tailwind.config.js
 │   vite.config.js
 │
@@ -51,14 +51,15 @@ D:\KULAIH\ALL_PROJECT\KP_SISTEMINFORMASIDANPENCATATANBARANG\FRONTEND\SIPB-FRONTS
     │       DefaultLayout.vue
     │
     ├───lib
+    │       api-session-deprecated.js
     │       api.js
+    │       logger.js
     │
     ├───pages
     │   │   BatasBarang.vue
     │   │   BatasPengajuan.vue
     │   │   JenisBarang.vue
     │   │   PengadaanBarang.vue
-    │   │   PengajuanBarang.vue
     │   │   Users.vue
     │   │
     │   ├───admin
@@ -84,6 +85,7 @@ D:\KULAIH\ALL_PROJECT\KP_SISTEMINFORMASIDANPENCATATANBARANG\FRONTEND\SIPB-FRONTS
     │
     └───stores
             loadingStore.js
+            pengunaanBarangStore.js
             userStore.js
 
-PS D:\KULAIH\ALL_PROJECT\KP_SistemInformasidanPencatatanBarang\frontend>
+PS D:\KULAIH\ALL_PROJECT\KP_SistemInformasidanPencatatanBarang\frontend\SIPB-FrontSide-main>

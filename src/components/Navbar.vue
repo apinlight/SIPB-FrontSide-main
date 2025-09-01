@@ -28,6 +28,7 @@
   </nav>
 </template>
 
+<!-- src/components/Navbar.vue -->
 <script setup>
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
@@ -41,20 +42,17 @@ const logout = async () => {
   logger.auth.logout()
   
   try {
-    // Get fresh CSRF token
-    await API.get('/sanctum/csrf-cookie')
-    
-    // Use correct logout endpoint
-    const response = await API.post('/api/v1/logout')
+    // ✅ Stateless logout - delete token on server (API uses /api/logout not /api/v1/logout)
+    await API.post('/api/logout', {})
     logger.success('Logout API call successful')
 
   } catch (err) {
     logger.warn('Logout API error (continuing with logout):', err.response?.data?.message || err.message)
     // Continue with logout even if API call fails
   } finally {
-    // Always clear user data and redirect
+    // ✅ Always clear auth data and redirect
     userStore.clearUser()
-    router.push('/')
+    router.replace('/login')
   }
 }
 </script>
