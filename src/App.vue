@@ -1,12 +1,17 @@
-<script setup>
-import { RouterView } from 'vue-router'
-</script>
-
 <template>
-  <div id="app" class="font-sans bg-gray-100 text-gray-800">
-    <RouterView />
-  </div>
+  <router-view />
 </template>
 
-<style scoped>
-</style>
+<script setup>
+import { onMounted } from 'vue';
+import { useUserStore } from '@/stores/userStore';
+
+// Get the user store instance
+const userStore = useUserStore();
+
+// When the application component is first mounted,
+// check if there's an existing token and validate it with the server.
+onMounted(() => {
+  userStore.checkAuth();
+});
+</script>
