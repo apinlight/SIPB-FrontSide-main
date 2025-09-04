@@ -5,6 +5,13 @@ import { toast } from 'vue3-toastify';
 export const useBarangStore = defineStore('barang', {
   state: () => ({
     itemList: [],
+        pagination: {
+      current_page: 1,
+      last_page: 1,
+      from: 0,
+      to: 0,
+      total: 0,
+    },
     loading: false,
   }),
   actions: {
@@ -12,7 +19,8 @@ export const useBarangStore = defineStore('barang', {
       this.loading = true;
       try {
         const { data } = await apiClient.get('/barang', { params: { with: 'jenis_barang' } });
-        this.itemList = data.data;
+        this.itemList = data.data || [];
+        this.pagination = data.meta || { current_page: 1, last_page: 1, total: 0 };
       } catch (e) {
         toast.error('Gagal memuat daftar barang.');
       } finally {

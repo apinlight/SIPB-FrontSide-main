@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { useUserStore } from '@/stores/userStore';
-import { logger } from './logger'; // We will keep your custom logger
+import { logger } from './logger';
 
-// 1. Create a new Axios instance with a complete base URL, including the /api/v1 prefix.
+// Create a new Axios instance with the FULL base URL, including /api/v1.
 const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1',
+    baseURL: import.meta.env.VITE_API_BASE_URL,
     withCredentials: false,
     headers: {
         'Accept': 'application/json',
@@ -12,12 +12,10 @@ const apiClient = axios.create({
     }
 });
 
-// 2. Request interceptor: Keep your logger and get the token from the Pinia store.
+// Request interceptor: Get the token from the Pinia store.
 apiClient.interceptors.request.use(
     (config) => {
         logger.api.request(config.method, config.url);
-        
-        // Get the Pinia store instance *inside* the interceptor.
         const userStore = useUserStore();
         const token = userStore.token;
 
@@ -25,8 +23,6 @@ apiClient.interceptors.request.use(
             config.headers.Authorization = `Bearer ${token}`;
             logger.auth.tokenAttached();
         }
-        
-        // The complex URL prefixing logic is no longer needed because of the new baseURL.
         return config;
     },
     (error) => {
@@ -35,7 +31,7 @@ apiClient.interceptors.request.use(
     }
 );
 
-// 3. Response interceptor: Keep your logger and delegate logout logic to the Pinia store.
+// Response interceptor: Delegate logout logic to the Pinia store.
 apiClient.interceptors.response.use(
     (response) => {
         logger.api.response(response.config.method, response.config.url, response.status);
@@ -49,11 +45,9 @@ apiClient.interceptors.response.use(
             error.response?.data?.message || error.message
         );
         
-        // On a 401 Unauthorized error, call the central logout action in the user store.
         if (error.response?.status === 401) {
             logger.auth.tokenExpired();
             const userStore = useUserStore();
-            // The store will be responsible for clearing the token/user and redirecting.
             userStore.logout(); 
         }
         
