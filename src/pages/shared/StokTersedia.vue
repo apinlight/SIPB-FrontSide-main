@@ -52,11 +52,11 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ item.id_barang }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm">{{ item.nama_barang }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.jenis_barang }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                  <span :class="getStockStatusClass(item.jumlah_tersedia)">{{ item.jumlah_tersedia }} unit</span>
-                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">{{ item.jumlah_tersedia }} unit</td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span :class="getStockBadgeClass(item.jumlah_tersedia)">{{ getStockStatus(item.jumlah_tersedia) }}</span>
+                  <span :class="getStockBadgeClass(item.jumlah_tersedia)">
+                    {{ getStockStatus(item.jumlah_tersedia) }}
+                  </span>
                 </td>
               </tr>
             </tbody>
@@ -87,16 +87,14 @@ import { onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import BaseButton from '@/components/BaseButton.vue';
-import { getStockStatus, getStockStatusClass, getStockBadgeClass } from '@/utils/formatters';
-import { useStokStore } from '@/stores/stokStore'; // ✅ Use the new store
+import { useStokStore } from '@/stores/stokStore';
+// ✅ Import the correct, standardized function names
+import { getStockStatus, getStockBadgeClass } from '@/utils/formatters';
 
 const store = useStokStore();
-
-// Get state and getters from the store
 const { isLoading, filterQuery, filteredStock, totalStockCount, lowStockCount, totalItemTypes } = storeToRefs(store);
 
 onMounted(() => {
   store.fetchStock();
 });
-
 </script>

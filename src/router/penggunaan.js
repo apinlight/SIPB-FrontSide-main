@@ -1,4 +1,3 @@
-// src/router/penggunaan.js
 export const penggunaanRoutes = [
   {
     path: '/penggunaan-barang',
@@ -6,10 +5,8 @@ export const penggunaanRoutes = [
     component: () => import('@/pages/shared/PenggunaanBarang.vue'),
     meta: {
       requiresAuth: true,
-      requiresRole: ['admin', 'manager', 'user'],
+      roles: ['admin', 'manager', 'user'], // ✅ Standardized to 'roles'
       title: 'Penggunaan Barang'
     }
   }
-  // Note: CreatePenggunaanBarang, DetailPenggunaanBarang, and PendingApprovals 
-  // functionality is handled within PenggunaanBarang.vue comprehensive page
-]
+];

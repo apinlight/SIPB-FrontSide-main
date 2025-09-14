@@ -3,7 +3,6 @@ import { useUserStore } from '@/stores/userStore';
 import { toast } from 'vue3-toastify';
 import { logger } from '@/lib/logger';
 
-// Import route modules (assuming these exist and are correct)
 import { authRoutes } from './auth';
 import { dashboardRoutes } from './dashboard';
 import { penggunaanRoutes } from './penggunaan';
@@ -13,12 +12,47 @@ const routes = [
   ...authRoutes,
   ...dashboardRoutes,
   ...penggunaanRoutes,
+  
+  // --- Admin Routes ---
   {
     path: '/admin/persetujuan',
     name: 'PersetujuanPengadaan',
     component: () => import('@/pages/admin/PersetujuanPengadaan.vue'),
     meta: { requiresAuth: true, roles: ['admin'], title: 'Persetujuan Pengadaan' }
   },
+  // ✅ ADDED MISSING ADMIN ROUTES
+  {
+    path: '/admin/pengadaan-disetujui',
+    name: 'PengadaanDisetujui',
+    component: () => import('@/pages/admin/PengadaanDisetujui.vue'),
+    meta: { requiresAuth: true, roles: ['admin'], title: 'Pengadaan Disetujui' }
+  },
+  {
+    path: '/admin/pengadaan-manual',
+    name: 'PengadaanManual',
+    component: () => import('@/pages/admin/PengadaanManual.vue'),
+    meta: { requiresAuth: true, roles: ['admin'], title: 'Pengadaan Manual' }
+  },
+  {
+    path: '/jenis-barang',
+    name: 'JenisBarang',
+    component: () => import('@/pages/JenisBarang.vue'),
+    meta: { requiresAuth: true, roles: ['admin'], title: 'Jenis Barang' }
+  },
+  {
+    path: '/batas-barang',
+    name: 'BatasBarang',
+    component: () => import('@/pages/BatasBarang.vue'),
+    meta: { requiresAuth: true, roles: ['admin'], title: 'Batas Barang' }
+  },
+  {
+    path: '/batas-pengajuan',
+    name: 'BatasPengajuan',
+    component: () => import('@/pages/BatasPengajuan.vue'),
+    meta: { requiresAuth: true, roles: ['admin'], title: 'Batas Pengajuan' }
+  },
+
+  // --- User/Manager Routes ---
   {
     path: '/user/pengajuan',
     name: 'PengajuanBarang',
@@ -31,7 +65,14 @@ const routes = [
     component: () => import('@/pages/Users.vue'),
     meta: { requiresAuth: true, roles: ['admin', 'manager'], title: 'Kelola Users' }
   },
-  // ... (keep all your other route definitions here) ...
+  {
+    path: '/manager/riwayat-cabang',
+    name: 'RiwayatCabang',
+    component: () => import('@/pages/manager/RiwayatCabang.vue'),
+    meta: { requiresAuth: true, roles: ['manager'], title: 'Riwayat Cabang' }
+  },
+  
+  // --- 404 Fallback ---
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -43,42 +84,23 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior: (to, from, savedPosition) => savedPosition || { top: 0 },
+  scrollBehavior: () => ({ top: 0 }),
 });
 
-/**
- * Global Navigation Guard
- * This guard is now much simpler. It only READS from the user store.
- * The responsibility of loading and validating the user is handled elsewhere (App.vue).
- */
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore();
   const isAuthenticated = userStore.isAuthenticated;
-
-  // Set page title
   document.title = to.meta.title ? `${to.meta.title} - SIPB` : 'SIPB';
-
   const requiredRoles = to.meta.roles || [];
 
-  // Rule 1: If a route requires auth and the user is not authenticated
   if (to.meta.requiresAuth && !isAuthenticated) {
-    logger.warn('Guard: Blocked access to protected route. Redirecting to login.', { path: to.fullPath });
-    toast.error('Silakan login terlebih dahulu.');
     next({ name: 'Login', query: { redirect: to.fullPath } });
-  } 
-  // Rule 2: If a route requires a specific role and the user doesn't have it
-  else if (requiredRoles.length > 0 && !userStore.userRoles.some(role => requiredRoles.includes(role))) {
-    logger.warn('Guard: Role-based access denied.', { path: to.fullPath, required: requiredRoles, userRoles: userStore.userRoles });
+  } else if (requiredRoles.length > 0 && !userStore.userRoles.some(role => requiredRoles.includes(role))) {
     toast.error('Anda tidak memiliki akses ke halaman ini.');
-    next({ name: 'Dashboard' }); // Or a dedicated 'Access Denied' page
-  }
-  // Rule 3: If a route is for guests (like Login) but the user is already authenticated
-  else if (to.meta.requiresGuest && isAuthenticated) {
-    logger.info('Guard: Authenticated user tried to access a guest page. Redirecting to dashboard.');
     next({ name: 'Dashboard' });
-  } 
-  // Rule 4: Otherwise, allow navigation
-  else {
+  } else if (to.meta.requiresGuest && isAuthenticated) {
+    next({ name: 'Dashboard' });
+  } else {
     next();
   }
 });

@@ -1,4 +1,3 @@
-// src/router/dashboard.js
 export const dashboardRoutes = [
   {
     path: '/dashboard',
@@ -15,7 +14,7 @@ export const dashboardRoutes = [
     component: () => import('@/pages/shared/DaftarBarang.vue'),
     meta: {
       requiresAuth: true,
-      requiresRole: ['admin', 'manager', 'user'],
+      roles: ['admin', 'manager', 'user'], // ✅ Standardized to 'roles'
       title: 'Daftar Barang'
     }
   },
@@ -25,7 +24,7 @@ export const dashboardRoutes = [
     component: () => import('@/pages/shared/StokTersedia.vue'),
     meta: {
       requiresAuth: true,
-      requiresRole: ['admin', 'manager', 'user'],
+      roles: ['admin', 'manager', 'user'], // ✅ Standardized to 'roles'
       title: 'Stok Tersedia'
     }
   },
@@ -35,20 +34,18 @@ export const dashboardRoutes = [
     component: () => import('@/pages/shared/LaporanPengadaan.vue'),
     meta: {
       requiresAuth: true,
-      requiresRole: ['admin', 'manager'],
+      roles: ['admin', 'manager'], // ✅ Standardized to 'roles'
       title: 'Laporan Pengadaan'
     }
   },
-  // Note: LaporanPenggunaan and LaporanStok functionality 
-  // can be accessed through main Laporan page
   {
     path: '/user/riwayat',
     name: 'RiwayatPengajuan',
     component: () => import('@/pages/user/RiwayatPengajuan.vue'),
     meta: {
       requiresAuth: true,
-      requiresRole: ['admin', 'manager', 'user'],
+      roles: ['admin', 'manager', 'user'], // ✅ Standardized to 'roles'
       title: 'Riwayat Pengajuan'
     }
   }
-]
+];
