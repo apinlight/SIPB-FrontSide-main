@@ -1,15 +1,18 @@
 <template>
   <DefaultLayout>
-    <div class="p-6 max-w-4xl mx-auto">
-      <h1 class="text-2xl font-bold mb-6">🛠️ Pengadaan Manual oleh Admin</h1>
+    <div class="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
+      <div class="bg-white p-6 rounded-xl shadow">
+        <h1 class="text-2xl font-bold text-gray-800">🛠️ Pengadaan Manual oleh Admin</h1>
+        <p class="text-gray-600 mt-1">Tambahkan pengadaan langsung untuk user/cabang tertentu</p>
+      </div>
 
-      <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <div class="bg-white rounded-xl shadow p-6">
         <h2 class="text-lg font-semibold mb-4">Tambah Pengadaan Manual</h2>
         <form @submit.prevent="submitForm" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block mb-1 font-semibold">Pilih User/Cabang</label>
-              <select v-model="form.unique_id" class="w-full p-2 border rounded" required>
+              <select v-model="form.unique_id" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
                 <option disabled value="">-- Pilih User --</option>
                 <option v-for="user in formDependencies.users" :key="user.unique_id" :value="user.unique_id">
                   {{ user.username }} - {{ user.branch_name }}
@@ -18,7 +21,7 @@
             </div>
             <div>
               <label class="block mb-1 font-semibold">Pilih Barang</label>
-              <select v-model="form.id_barang" class="w-full p-2 border rounded" required>
+              <select v-model="form.id_barang" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
                 <option disabled value="">-- Pilih Barang --</option>
                 <option v-for="barang in formDependencies.barang" :key="barang.id_barang" :value="barang.id_barang">
                   {{ barang.nama_barang }} - Rp {{ formatCurrency(barang.harga_barang) }}
@@ -27,25 +30,25 @@
             </div>
             <div>
               <label class="block mb-1 font-semibold">Jumlah Barang</label>
-              <input type="number" v-model.number="form.jumlah" class="w-full p-2 border rounded" min="1" required />
+              <input type="number" v-model.number="form.jumlah" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" min="1" required />
             </div>
             <div>
               <label class="block mb-1 font-semibold">Keterangan (Opsional)</label>
-              <input type="text" v-model="form.keterangan" class="w-full p-2 border rounded" placeholder="Keterangan pengadaan manual..." />
+              <input type="text" v-model="form.keterangan" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Keterangan pengadaan manual..." />
             </div>
           </div>
-          <div class="flex gap-3">
-            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700" :disabled="submitting">
-              {{ submitting ? 'Memproses...' : 'Tambah Pengadaan' }}
-            </button>
-            <button type="button" @click="resetForm" class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600">
+          <div class="flex flex-col sm:flex-row gap-2">
+            <BaseButton type="submit" variant="primary" :disabled="submitting" :loading="submitting" fullWidth>
+              Tambah Pengadaan
+            </BaseButton>
+            <BaseButton type="button" variant="secondary" @click="resetForm" fullWidth>
               Reset
-            </button>
+            </BaseButton>
           </div>
         </form>
       </div>
 
-      <div class="bg-white rounded-lg shadow">
+      <div class="bg-white rounded-xl shadow">
         <div class="p-6 border-b">
           <h2 class="text-lg font-semibold">Riwayat Pengadaan Manual</h2>
           </div>
@@ -56,7 +59,7 @@
           <div v-else-if="riwayatList.length === 0" class="text-center py-10 text-gray-500">
             Belum ada riwayat pengadaan manual.
           </div>
-          <div v-else class="overflow-x-auto">
+          <div v-else class="overflow-x-auto hidden md:block">
             <table class="w-full table-auto border-collapse border">
               <thead class="bg-gray-50">
                 <tr>
@@ -68,7 +71,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="item in riwayatList" :key="item.id" class="border-b hover:bg-gray-50">
+                <tr v-for="item in riwayatList" :key="item.id || (item.unique_id + '-' + item.id_barang + '-' + item.created_at)" class="border-b hover:bg-gray-50">
                   <td class="border px-4 py-3">{{ formatDate(item.created_at) }}</td>
                   <td class="border px-4 py-3">
                     {{ item.user?.username }}<br>
@@ -79,16 +82,33 @@
                   </td>
                   <td class="border px-4 py-3 text-center">{{ item.jumlah_barang }}</td>
                   <td class="border px-4 py-3 text-center">
-                    <button @click="handleDelete(item)" class="text-red-600 hover:text-red-800 text-sm">
-                      Hapus
-                    </button>
+                    <BaseButton size="sm" variant="danger" @click="handleDelete(item)">Hapus</BaseButton>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <div v-if="pagination.last_page > 1" class="flex justify-center gap-2 mt-6">
+          <!-- Mobile Cards -->
+          <div class="md:hidden divide-y">
+            <div v-for="item in riwayatList" :key="item.id || (item.unique_id + '-' + item.id_barang + '-' + item.created_at)" class="p-4">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="font-semibold text-gray-900">{{ item.barang?.nama_barang }}</h3>
+                  <p class="text-xs text-gray-500">{{ formatDate(item.created_at) }}</p>
+                  <p class="text-xs text-gray-500">{{ item.user?.username }} — {{ item.user?.branch_name }}</p>
+                </div>
               </div>
+              <div class="flex items-center justify-between mt-2">
+                <span class="text-sm">Jumlah: {{ item.jumlah_barang }}</span>
+                <BaseButton size="sm" variant="danger" @click="handleDelete(item)">Hapus</BaseButton>
+              </div>
+            </div>
+          </div>
+          <div v-if="pagination.last_page > 1" class="bg-white p-4 rounded-xl shadow flex flex-col sm:flex-row gap-3 sm:gap-2 sm:justify-center items-center mt-6">
+            <BaseButton size="sm" variant="secondary" @click="prevPage" :disabled="pagination.current_page <= 1">Sebelumnya</BaseButton>
+            <span class="px-3 py-1 text-sm">{{ pagination.current_page }} / {{ pagination.last_page }}</span>
+            <BaseButton size="sm" variant="secondary" @click="nextPage" :disabled="pagination.current_page >= pagination.last_page">Berikutnya</BaseButton>
+          </div>
         </div>
       </div>
     </div>
@@ -101,6 +121,7 @@ import { storeToRefs } from 'pinia';
 import { formatDate, formatCurrency } from '@/utils/formatters';
 import { usePengadaanAdminStore } from '@/stores/pengadaanAdminStore';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
+import BaseButton from '@/components/BaseButton.vue';
 
 const store = usePengadaanAdminStore();
 const {
@@ -133,6 +154,18 @@ const handleDelete = (item) => {
 
 const resetForm = () => {
   form.value = { unique_id: '', id_barang: '', jumlah: 1, keterangan: '' };
+};
+
+const prevPage = () => {
+  if (pagination.value.current_page > 1) {
+    store.fetchItems({ endpoint: '/gudang', page: pagination.value.current_page - 1 });
+  }
+};
+
+const nextPage = () => {
+  if (pagination.value.current_page < pagination.value.last_page) {
+    store.fetchItems({ endpoint: '/gudang', page: pagination.value.current_page + 1 });
+  }
 };
 
 </script>
