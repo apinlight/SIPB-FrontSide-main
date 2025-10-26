@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getActivePinia } from 'pinia';
 import { useUserStore } from '@/stores/userStore';
 import { logger } from './logger';
 
@@ -16,8 +17,15 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
     (config) => {
         logger.api.request(config.method, config.url);
-        const userStore = useUserStore();
-        const token = userStore.token;
+        let token = null;
+        const activePinia = getActivePinia();
+        if (activePinia) {
+            const userStore = useUserStore();
+            token = userStore.token;
+        } else {
+            // Fallback to localStorage if Pinia hasn't been activated yet
+            token = localStorage.getItem('auth_token');
+        }
 
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -47,8 +55,16 @@ apiClient.interceptors.response.use(
         
         if (error.response?.status === 401) {
             logger.auth.tokenExpired();
-            const userStore = useUserStore();
-            userStore.logout(); 
+            const activePinia = getActivePinia();
+            if (activePinia) {
+                const userStore = useUserStore();
+                userStore.logout();
+            } else {
+                // Fallback: clear tokens and reload to login
+                localStorage.removeItem('auth_user');
+                localStorage.removeItem('auth_token');
+                // Optional: window.location.href = '/login';
+            }
         }
         
         return Promise.reject(error);

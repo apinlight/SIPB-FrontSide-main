@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import { getActivePinia } from 'pinia';
 import { useUserStore } from '@/stores/userStore';
 import { toast } from 'vue3-toastify';
 import { logger } from '@/lib/logger';
@@ -18,7 +19,7 @@ const routes = [
     path: '/admin/persetujuan',
     name: 'PersetujuanPengadaan',
     component: () => import('@/pages/admin/PersetujuanPengadaan.vue'),
-    meta: { requiresAuth: true, roles: ['admin'], title: 'Persetujuan Pengadaan' }
+     meta: { requiresAuth: true, roles: ['admin', 'manager'], title: 'Persetujuan Pengadaan' }
   },
   // ✅ ADDED MISSING ADMIN ROUTES
   {
@@ -88,14 +89,16 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  const userStore = useUserStore();
-  const isAuthenticated = userStore.isAuthenticated;
-  document.title = to.meta.title ? `${to.meta.title} - SIPB` : 'SIPB';
+  // Avoid using stores before Pinia is installed/active
+  const activePinia = getActivePinia();
+  const userStore = activePinia ? useUserStore() : null;
+  const isAuthenticated = userStore?.isAuthenticated ?? false;
+  document.title = to.meta.title ? `${to.meta.title} - SIMBA` : 'SIMBA';
   const requiredRoles = to.meta.roles || [];
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     next({ name: 'Login', query: { redirect: to.fullPath } });
-  } else if (requiredRoles.length > 0 && !userStore.userRoles.some(role => requiredRoles.includes(role))) {
+  } else if (requiredRoles.length > 0 && userStore && !userStore.userRoles.some(role => requiredRoles.includes(role))) {
     toast.error('Anda tidak memiliki akses ke halaman ini.');
     next({ name: 'Dashboard' });
   } else if (to.meta.requiresGuest && isAuthenticated) {
