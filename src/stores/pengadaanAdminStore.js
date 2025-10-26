@@ -93,8 +93,9 @@ export const usePengadaanAdminStore = defineStore('pengadaanAdmin', {
     async processToGudang(pengajuan) {
       this.processing = true;
       try {
-        // Use correct payload as per backend API
-        await apiClient.put(`/pengajuan/${pengajuan.id_pengajuan}`, { action: 'proses_ke_gudang' });
+        // Backend automatically transfers stock when status becomes 'Disetujui'
+        // So we don't need a separate 'action' param
+        await apiClient.put(`/pengajuan/${pengajuan.id_pengajuan}`, { status_pengajuan: 'Disetujui' });
         toast.success(`Pengajuan #${pengajuan.id_pengajuan} berhasil diproses ke gudang.`);
         this.itemList = this.itemList.filter(item => item.id_pengajuan !== pengajuan.id_pengajuan);
       } catch (e) {
@@ -126,10 +127,17 @@ export const usePengadaanAdminStore = defineStore('pengadaanAdmin', {
     async createManualPengadaan(formData) {
         this.processing = true;
         try {
-            await apiClient.post('/pengajuan/manual', formData);
+            // Manual procurement should use POST /gudang to directly add stock
+            // instead of /pengajuan/manual which doesn't exist
+            await apiClient.post('/gudang', {
+              unique_id: formData.unique_id,
+              id_barang: formData.id_barang,
+              jumlah_barang: formData.jumlah,
+              keterangan: formData.keterangan || 'Pengadaan manual oleh admin'
+            });
             toast.success('Pengadaan manual berhasil ditambahkan.');
-            // Refresh the history list
-            await this.fetchItems({ endpoint: '/gudang', status: 'manual' }); // Assuming 'manual' is a valid status/type filter
+            // Refresh the history list - using regular gudang endpoint
+            await this.fetchItems({ endpoint: '/gudang' });
             return true; // Indicate success
         } catch(e) {
             toast.error(e.response?.data?.message || 'Gagal membuat pengadaan manual.');
