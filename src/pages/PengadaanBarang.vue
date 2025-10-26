@@ -39,6 +39,8 @@ import { ref, onMounted, computed } from 'vue'
 import API from '@/lib/api'
 import { toast } from 'vue3-toastify'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import BarangForm from '@/components/BarangForm.vue'
+import BarangTable from '@/components/BarangTable.vue'
 import { useUserStore } from '@/stores/userStore'
 import { logger } from '@/lib/logger'
 
@@ -103,23 +105,24 @@ const fetchJenisBarang = async () => {
   }
 }
 
-const handleSave = async (form) => {
+const handleSave = async (payloadRef) => {
   loading.value = true
-  logger.info('Saving barang', { mode: editMode.value ? 'edit' : 'create', form })
+  logger.info('Saving barang', { mode: editMode.value ? 'edit' : 'create', form: payloadRef?.value })
   try {
-    if (editMode.value && form.id_barang) {
-      await API.put(`/barang/${form.id_barang}`, form)
-      logger.success('Barang updated successfully', { id_barang: form.id_barang })
+    const data = payloadRef?.value ?? {}
+    if (editMode.value && data.id_barang) {
+      await API.put(`/barang/${data.id_barang}`, data)
+      logger.success('Barang updated successfully', { id_barang: data.id_barang })
       showAlert('Barang berhasil diupdate', 'success')
     } else {
-      await API.post('/barang', form)
-      logger.success('Barang created successfully', { nama_barang: form.nama_barang })
+      await API.post('/barang', data)
+      logger.success('Barang created successfully', { nama_barang: data.nama_barang })
       showAlert('Barang berhasil ditambahkan', 'success')
     }
     resetForm()
     fetchData()
   } catch (error) {
-    logger.error('Error saving barang:', error.message, { form })
+    logger.error('Error saving barang:', error.message, { form: payloadRef?.value })
     const msg = error.response?.data?.message || 'Gagal menyimpan barang'
     showAlert(msg, 'error')
   } finally {
