@@ -15,10 +15,12 @@ export const useBarangStore = defineStore('barang', {
     loading: false,
   }),
   actions: {
-    async fetchItems() {
+    async fetchItems(page = 1, search = '') {
       this.loading = true;
       try {
-        const { data } = await apiClient.get('/barang', { params: { with: 'jenis_barang' } });
+        const params = { page };
+        if (search) params.search = search;
+        const { data } = await apiClient.get('/barang', { params });
         this.itemList = data.data || [];
         this.pagination = data.meta || { current_page: 1, last_page: 1, total: 0 };
       } catch (e) {
@@ -28,13 +30,46 @@ export const useBarangStore = defineStore('barang', {
       }
     },
     async saveItem(itemData) {
-        // ... save logic (create/update)
-        await this.fetchItems(); // Refresh list
-        return true;
+        this.loading = true;
+        try {
+          const isEditing = !!itemData.id_barang;
+          const payload = {
+            id_jenis_barang: itemData.id_jenis_barang,
+            nama_barang: itemData.nama_barang,
+            harga_barang: itemData.harga_barang,
+            deskripsi: itemData.deskripsi,
+            satuan: itemData.satuan,
+            batas_minimum: itemData.batas_minimum,
+          };
+          if (isEditing) {
+            await apiClient.put(`/barang/${itemData.id_barang}`, payload);
+            toast.success('Barang berhasil diupdate.');
+          } else {
+            await apiClient.post('/barang', payload);
+            toast.success('Barang berhasil ditambahkan.');
+          }
+          await this.fetchItems(this.pagination.current_page);
+          return true;
+        } catch (e) {
+          const msg = e.response?.data?.message || 'Gagal menyimpan barang.';
+          toast.error(msg);
+          return false;
+        } finally {
+          this.loading = false;
+        }
     },
     async deleteItem(id) {
-        // ... delete logic
-        this.itemList = this.itemList.filter(i => i.id_barang !== id);
+        this.loading = true;
+        try {
+          await apiClient.delete(`/barang/${id}`);
+          toast.success('Barang berhasil dihapus.');
+          this.itemList = this.itemList.filter(i => i.id_barang !== id);
+        } catch (e) {
+          const msg = e.response?.data?.message || 'Gagal menghapus barang.';
+          toast.error(msg);
+        } finally {
+          this.loading = false;
+        }
     },
   },
 });

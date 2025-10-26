@@ -100,9 +100,10 @@ export const useUserManagementStore = defineStore('userManagement', {
      * @param {object} user - The user object to delete.
      */
     async deleteUser(user) {
-      logger.info(`Store: Deleting user`, { userId: user.id });
+      const id = user.unique_id || user.id; // backward compatibility
+      logger.info(`Store: Deleting user`, { userId: id });
       try {
-        await apiClient.delete(`/users/${user.id}`);
+        await apiClient.delete(`/users/${id}`);
         toast.success(`User "${user.username}" berhasil dihapus.`);
         // Remove user from list locally for instant UI update, or just refetch
         await this.fetchUsers();

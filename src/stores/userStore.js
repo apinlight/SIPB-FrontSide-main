@@ -11,7 +11,13 @@ export const useUserStore = defineStore('user', {
 
     getters: {
         isAuthenticated: (state) => !!state.token && !!state.user,
-        userRoles: (state) => state.user?.roles || [],
+        // Normalize roles to string array to support both ['admin'] and [{ name: 'admin' }]
+        userRoles: (state) => {
+            const roles = state.user?.roles || [];
+            return roles
+                .map(r => typeof r === 'string' ? r : r?.name)
+                .filter(Boolean);
+        },
         isAdmin(state) { return this.userRoles.includes('admin') || this.userRoles.includes('superadmin'); },
         isManager(state) { return this.userRoles.includes('manager'); },
     },

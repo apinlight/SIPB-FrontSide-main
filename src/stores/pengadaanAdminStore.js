@@ -53,7 +53,24 @@ export const usePengadaanAdminStore = defineStore('pengadaanAdmin', {
         // Refresh the list by removing the approved item
         this.itemList = this.itemList.filter(item => item.id_pengajuan !== id);
       } catch (e) {
-        toast.error(e.response?.data?.message || 'Gagal menyetujui pengajuan.');
+        console.error('Approval error:', e.response?.data);
+        
+        // Handle stock validation errors with detailed messages
+        if (e.response?.status === 422 && e.response?.data?.message === 'Stock validation failed') {
+          const errorData = e.response.data;
+          const stockErrors = errorData.errors || [];
+          
+          if (Array.isArray(stockErrors) && stockErrors.length > 0) {
+            // Show detailed stock errors in alert for better readability
+            const errorMessage = `PENGAJUAN DITOLAK - STOK TIDAK MENCUKUPI\n\n${errorData.details || 'Stok di gudang pusat tidak mencukupi'}:\n\n${stockErrors.join('\n')}\n\nSilakan pastikan stok tersedia sebelum menyetujui pengajuan.`;
+            alert(errorMessage);
+            toast.error('Pengajuan ditolak: Stok tidak mencukupi');
+          } else {
+            toast.error(errorData.details || 'Stok tidak mencukupi untuk menyetujui pengajuan ini.');
+          }
+        } else {
+          toast.error(e.response?.data?.message || 'Gagal menyetujui pengajuan.');
+        }
       } finally {
         this.processing = false;
       }
@@ -76,13 +93,18 @@ export const usePengadaanAdminStore = defineStore('pengadaanAdmin', {
     async processToGudang(pengajuan) {
       this.processing = true;
       try {
-        // The backend should ideally handle this in a single transaction.
-        // This action encapsulates the multi-step process required by the current API.
-        await apiClient.post(`/pengajuan/${pengajuan.id_pengajuan}/process-to-gudang`);
+        // Use correct payload as per backend API
+        await apiClient.put(`/pengajuan/${pengajuan.id_pengajuan}`, { action: 'proses_ke_gudang' });
         toast.success(`Pengajuan #${pengajuan.id_pengajuan} berhasil diproses ke gudang.`);
         this.itemList = this.itemList.filter(item => item.id_pengajuan !== pengajuan.id_pengajuan);
       } catch (e) {
-        toast.error(e.response?.data?.message || 'Gagal memproses ke gudang.');
+        // Show backend error details if available
+        let message = e.response?.data?.message || 'Gagal memproses ke gudang.';
+        const details = e.response?.data?.details;
+        if (details && Array.isArray(details) && details.length > 0) {
+          message += '\n' + details.join('\n');
+        }
+        toast.error(message);
       } finally {
         this.processing = false;
       }

@@ -36,10 +36,9 @@ export const useJenisBarangStore = defineStore('jenisBarang', {
       this.loading = true;
       try {
         const isEditing = !!itemData.id_jenis_barang;
-        const payload = {
-            nama_jenis_barang: itemData.nama_jenis_barang,
-            deskripsi: itemData.deskripsi,
-        };
+    const payload = {
+      nama_jenis_barang: itemData.nama_jenis_barang,
+    };
 
         if (isEditing) {
           await apiClient.put(`/jenis-barang/${itemData.id_jenis_barang}`, payload);

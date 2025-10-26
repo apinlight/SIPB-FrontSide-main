@@ -105,23 +105,39 @@ export const useLaporanStore = defineStore('laporan', {
     /**
      * Handles exporting the report data.
      */
-    async exportLaporan() {
-      logger.info('Store: Exporting laporan data', { filters: this.filters });
+    async exportLaporan(typeOrEvent = 'summary') {
+      // Guard against Vue passing PointerEvent when no arg provided
+      const allowedTypes = ['summary', 'barang', 'pengajuan', 'penggunaan', 'stok', 'all'];
+      if (typeOrEvent && typeof typeOrEvent === 'object' && typeof typeOrEvent.preventDefault === 'function') {
+        try { typeOrEvent.preventDefault(); } catch (_) {}
+      }
+      const type = typeof typeOrEvent === 'string' && allowedTypes.includes(typeOrEvent)
+        ? typeOrEvent
+        : 'summary';
+
+      logger.info('Store: Exporting laporan data', { type, filters: this.filters });
       try {
         const params = {
           period: this.filters.period,
           branch: this.filters.branch || undefined,
           start_date: this.filters.startDate || undefined,
           end_date: this.filters.endDate || undefined,
-          type: 'summary', // As seen in original component
         };
 
-        const response = await apiClient.get('/laporan/export', { params, responseType: 'blob' });
+        const response = await apiClient.get(`/laporan/export/${type}`, { params, responseType: 'blob' });
 
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', `laporan-pengadaan-${new Date().toISOString().split('T')[0]}.xlsx`);
+        // Try use filename from header if provided
+        const cd = response.headers?.['content-disposition'] || response.headers?.get?.('content-disposition');
+        let filename = `laporan-${type}-${new Date().toISOString().split('T')[0]}.xlsx`;
+        if (cd && /filename=/i.test(cd)) {
+          const match = cd.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+          const raw = decodeURIComponent(match?.[1] || match?.[2] || '');
+          if (raw) filename = raw;
+        }
+        link.setAttribute('download', filename);
         document.body.appendChild(link);
         link.click();
         link.remove();
