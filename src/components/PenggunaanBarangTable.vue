@@ -1,10 +1,11 @@
 <template>
-  <div class="bg-white rounded-xl shadow overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-200">
-      <h3 class="text-lg font-medium text-gray-900">Riwayat Penggunaan Barang</h3>
+  <div class="space-y-4">
+    <div class="px-6 py-4 bg-white rounded-xl shadow-md">
+      <h3 class="text-lg font-semibold text-gray-900">Riwayat Penggunaan Barang</h3>
     </div>
 
-    <div class="overflow-x-auto">
+    <!-- Desktop: Table view -->
+    <div class="hidden md:block overflow-x-auto bg-white rounded-xl shadow-md">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
@@ -19,10 +20,10 @@
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           <tr v-if="loading">
-            <td :colspan="colspan" class="px-6 py-4 text-center text-gray-500">Memuat data...</td>
+            <td :colspan="colspan" class="px-6 py-8 text-center text-gray-500">Memuat data...</td>
           </tr>
           <tr v-else-if="!items || items.length === 0">
-            <td :colspan="colspan" class="px-6 py-4 text-center text-gray-500">Belum ada data.</td>
+            <td :colspan="colspan" class="px-6 py-8 text-center text-gray-500">Belum ada data.</td>
           </tr>
           <tr v-else v-for="item in items" :key="item.id_penggunaan" class="hover:bg-gray-50">
             <td class="px-6 py-4 whitespace-nowrap text-sm">{{ formatDate(item.tanggal_penggunaan) }}</td>
@@ -35,23 +36,83 @@
             <td v-if="showUser" class="px-6 py-4 whitespace-nowrap text-sm">{{ item.user?.username }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <div class="flex gap-2">
-                <button v-if="canApprove(item)" @click="$emit('approve', item)" class="text-green-600 hover:text-green-900" title="Setujui">✅</button>
-                <button v-if="canReject(item)" @click="$emit('reject', item)" class="text-red-600 hover:text-red-900" title="Tolak">❌</button>
-                <button v-if="canEdit(item)" @click="$emit('edit', item)" class="text-blue-600 hover:text-blue-900" title="Edit">✏️</button>
-                </div>
+                <BaseButton v-if="canApprove(item)" size="sm" variant="primary" @click="$emit('approve', item)" icon="✅">Setujui</BaseButton>
+                <BaseButton v-if="canReject(item)" size="sm" variant="danger" @click="$emit('reject', item)" icon="❌">Tolak</BaseButton>
+                <BaseButton v-if="canEdit(item)" size="sm" variant="secondary" @click="$emit('edit', item)" icon="✏️">Edit</BaseButton>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
+    </div>
 
-      <div v-if="pagination.last_page > 1" class="flex justify-between items-center p-4 border-t">
-        <div class="text-sm text-gray-600">
-          Menampilkan {{ pagination.from }} - {{ pagination.to }} dari {{ pagination.total }} data
+    <!-- Mobile: Card view -->
+    <div class="md:hidden space-y-3">
+      <div v-if="loading" class="flex items-center justify-center py-8 text-gray-500">
+        <div class="flex items-center gap-2">
+          <svg class="animate-spin h-5 w-5 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+          </svg>
+          <span>Memuat data...</span>
         </div>
-        <div class="flex space-x-2">
-          <BaseButton variant="secondary" @click="$emit('change-page', pagination.current_page - 1)" :disabled="pagination.current_page === 1">&laquo; Sebelumnya</BaseButton>
-          <BaseButton variant="secondary" @click="$emit('change-page', pagination.current_page + 1)" :disabled="pagination.current_page === pagination.last_page">Berikutnya &raquo;</BaseButton>
+      </div>
+      <div v-else-if="!items || items.length === 0" class="flex flex-col items-center py-8 text-gray-500">
+        <span class="text-3xl mb-2">🗂️</span>
+        <span>Belum ada data.</span>
+      </div>
+      <div
+        v-for="item in items"
+        :key="item.id_penggunaan"
+        class="bg-white rounded-lg shadow-md p-4 space-y-3"
+      >
+        <div class="flex justify-between items-start">
+          <div class="flex-1">
+            <h3 class="font-semibold text-gray-900 text-base">{{ item.barang?.nama_barang }}</h3>
+            <p class="text-xs text-gray-500 mt-1">{{ formatDate(item.tanggal_penggunaan) }}</p>
+          </div>
+          <span :class="getStatusBadgeClass(item.status)">{{ getStatusText(item.status) }}</span>
         </div>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <div class="text-gray-500">Jumlah</div>
+            <div class="font-semibold text-gray-900">{{ item.jumlah_digunakan }} unit</div>
+          </div>
+          <div>
+            <div class="text-gray-500">Keperluan</div>
+            <div class="font-semibold text-gray-900 truncate">{{ item.keperluan }}</div>
+          </div>
+          <div v-if="showUser" class="col-span-2">
+            <div class="text-gray-500">User</div>
+            <div class="font-semibold text-gray-900">{{ item.user?.username }}</div>
+          </div>
+        </div>
+        <div class="flex gap-2 pt-1">
+          <BaseButton v-if="canApprove(item)" size="sm" variant="primary" fullWidth @click="$emit('approve', item)" icon="✅">Setujui</BaseButton>
+          <BaseButton v-if="canReject(item)" size="sm" variant="danger" fullWidth @click="$emit('reject', item)" icon="❌">Tolak</BaseButton>
+          <BaseButton v-if="canEdit(item)" size="sm" variant="secondary" fullWidth @click="$emit('edit', item)" icon="✏️">Edit</BaseButton>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div v-if="pagination.last_page > 1" class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-md">
+      <div class="text-sm text-gray-600">
+        Menampilkan {{ pagination.from }} - {{ pagination.to }} dari {{ pagination.total }} data
+      </div>
+      <div class="flex gap-2">
+        <BaseButton 
+          size="sm" 
+          variant="secondary" 
+          @click="$emit('change-page', pagination.current_page - 1)" 
+          :disabled="pagination.current_page === 1"
+        >&laquo; Sebelumnya</BaseButton>
+        <BaseButton 
+          size="sm" 
+          variant="secondary" 
+          @click="$emit('change-page', pagination.current_page + 1)" 
+          :disabled="pagination.current_page === pagination.last_page"
+        >Berikutnya &raquo;</BaseButton>
       </div>
     </div>
   </div>

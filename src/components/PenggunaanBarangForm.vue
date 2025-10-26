@@ -1,23 +1,81 @@
 <template>
-  <div class="bg-white p-6 rounded-xl shadow">
+  <div class="bg-white p-4 sm:p-6 rounded-xl shadow">
     <h2 class="text-lg font-semibold text-gray-800 mb-4">
       {{ isEdit ? 'Edit Penggunaan Barang' : 'Tambah Penggunaan Barang' }}
     </h2>
     <form @submit.prevent="handleSubmit" class="space-y-4">
-        <select v-model="form.id_barang" required :disabled="isEdit">
-            <option value="">-- Pilih Barang --</option>
-            <option v-for="item in availableStock" :key="item.id_barang" :value="item.id_barang" :disabled="item.jumlah_tersedia === 0">
-                {{ item.nama_barang }} (Stok: {{ item.jumlah_tersedia }})
-            </option>
+      <!-- Barang selector -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Barang</label>
+        <select 
+          v-model="form.id_barang" 
+          required 
+          :disabled="isEdit"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+        >
+          <option value="">-- Pilih Barang --</option>
+          <option v-for="item in availableStock" :key="item.id_barang" :value="item.id_barang" :disabled="item.jumlah_tersedia === 0">
+            {{ item.nama_barang }} (Stok: {{ item.jumlah_tersedia }})
+          </option>
         </select>
-        <div class="flex gap-3 pt-4">
-            <BaseButton type="submit" variant="primary" :disabled="!isFormValid || store.isLoading">
-                {{ store.isLoading ? 'Menyimpan...' : (isEdit ? 'Update' : 'Simpan') }}
-            </BaseButton>
-            <BaseButton type="button" variant="secondary" @click="$emit('cancel')">
-                Batal
-            </BaseButton>
-        </div>
+      </div>
+
+      <!-- Tanggal penggunaan -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Penggunaan</label>
+        <input 
+          v-model="form.tanggal_penggunaan"
+          type="date"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          required
+        />
+      </div>
+
+      <!-- Jumlah digunakan -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah Digunakan</label>
+        <input 
+          v-model.number="form.jumlah_digunakan"
+          type="number" min="1"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          placeholder="Masukkan jumlah"
+          required
+        />
+        <p v-if="selectedStock" class="text-xs text-gray-500 mt-1">Stok tersedia: {{ selectedStock.jumlah_tersedia }}</p>
+      </div>
+
+      <!-- Keperluan -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Keperluan</label>
+        <textarea 
+          v-model="form.keperluan"
+          rows="2"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          placeholder="Tuliskan keperluan penggunaan"
+          required
+        />
+      </div>
+
+      <!-- Keterangan (opsional) -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan (opsional)</label>
+        <input 
+          v-model="form.keterangan"
+          type="text"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          placeholder="Tambahan informasi jika ada"
+        />
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-col sm:flex-row gap-3 pt-2">
+        <BaseButton type="submit" variant="primary" :disabled="!isFormValid || store.loading" :loading="store.loading" fullWidth>
+          {{ isEdit ? 'Update' : 'Simpan' }}
+        </BaseButton>
+        <BaseButton type="button" variant="secondary" @click="$emit('cancel')" fullWidth>
+          Batal
+        </BaseButton>
+      </div>
     </form>
   </div>
 </template>
@@ -62,10 +120,10 @@ const selectedStock = computed(() => {
 });
 
 const isFormValid = computed(() => {
-  return form.value.id_barang && 
-         form.value.jumlah_digunakan > 0 && 
-         form.value.keperluan?.trim() && 
-         (!selectedStock.value || form.value.jumlah_digunakan <= selectedStock.value.jumlah_tersedia);
+  return !!form.value.id_barang && 
+         Number(form.value.jumlah_digunakan) > 0 && 
+         !!form.value.keperluan?.trim() && 
+         (!selectedStock.value || Number(form.value.jumlah_digunakan) <= Number(selectedStock.value.jumlah_tersedia));
 });
 
 const handleSubmit = async () => {

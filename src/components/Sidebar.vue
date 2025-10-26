@@ -1,13 +1,46 @@
 <template>
-  <aside :class="['bg-gray-100 h-full p-4 shadow-md transition-all duration-300', collapsed ? 'w-20' : 'w-64']">
-    <div class="flex justify-end mb-4">
-      <button @click="collapsed = !collapsed" class="text-sm text-gray-600 hover:text-gray-800">
-        {{ collapsed ? '≡' : 'x' }}
+  <aside 
+    :class="[
+      'bg-white h-full shadow-xl transition-all duration-300 flex flex-col',
+      collapsed ? 'w-20' : 'w-64 sm:w-72'
+    ]"
+  >
+    <!-- Header with close/collapse button -->
+    <div class="flex items-center justify-between p-4 border-b border-gray-200">
+      <h2 v-if="!collapsed" class="text-lg font-bold text-gray-800">Menu</h2>
+      <button 
+        @click="handleToggle" 
+        class="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
+        :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+      >
+        <!-- Close icon on mobile, collapse/expand on desktop -->
+        <svg v-if="!collapsed" class="w-6 h-6 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <svg v-if="!collapsed" class="w-6 h-6 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+        </svg>
+        <svg v-if="collapsed" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+        </svg>
       </button>
     </div>
-    <nav class="flex flex-col gap-2">
-      <SidebarLink v-for="item in filteredMenu" :key="item.name" :item="item" :collapsed="collapsed" />
+
+    <!-- Navigation menu - scrollable -->
+    <nav class="flex-1 overflow-y-auto p-3 space-y-1">
+      <SidebarLink 
+        v-for="item in filteredMenu" 
+        :key="item.name" 
+        :item="item" 
+        :collapsed="collapsed"
+        @navigate="handleNavigate"
+      />
     </nav>
+
+    <!-- Footer with version or branding (optional) -->
+    <div v-if="!collapsed" class="p-4 border-t border-gray-200">
+      <p class="text-xs text-gray-500 text-center">SIMBA v1.0</p>
+    </div>
   </aside>
 </template>
 
@@ -16,8 +49,26 @@ import { ref, computed } from 'vue';
 import { useUserStore } from '@/stores/userStore';
 import SidebarLink from './SidebarLink.vue';
 
+const emit = defineEmits(['close']);
 const collapsed = ref(false);
 const userStore = useUserStore();
+
+const handleToggle = () => {
+  // On mobile, emit close event to parent (DefaultLayout)
+  // On desktop, just toggle collapsed state
+  if (window.innerWidth < 768) {
+    emit('close');
+  } else {
+    collapsed.value = !collapsed.value;
+  }
+};
+
+const handleNavigate = () => {
+  // Close sidebar on mobile after navigation
+  if (window.innerWidth < 768) {
+    emit('close');
+  }
+};
 
 const allMenu = [
   { 
