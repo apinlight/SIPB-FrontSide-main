@@ -6,19 +6,31 @@
     </div>
 
     <div class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-bold">Manajemen Stok Gudang</h1>
+      <h1 class="text-2xl font-bold">Manajemen Barang</h1>
       <button @click="toggleForm" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-        {{ showForm ? 'Tutup Form' : '+ Tambah Stok' }}
+        {{ showForm ? 'Tutup Form' : '+ Tambah Barang' }}
       </button>
     </div>
 
     <BarangForm
       v-if="showForm"
-      :editData="editItem"
+      :editData="editingItem"
+      :jenisBarangList="jenisBarangList"
       @close="resetForm"
-      @saved="handleSaved"
+      @save="handleSave"
     />
-    <BarangTable ref="barangTable" @edit="handleEdit" @saved="handleSaved" />
+    <BarangTable
+      ref="barangTable"
+      :items="items"
+      :loading="loading"
+      :pagination="pagination"
+      :canEdit="true"
+      :searchQuery="search"
+      @edit="handleEdit"
+      @delete="handleDelete"
+      @change-page="changePage"
+      @search="handleSearch"
+    />
   </DefaultLayout>
 </template>
 
@@ -36,20 +48,12 @@ const userStore = useUserStore()
 const showForm = ref(false)
 const editMode = ref(false)
 const loading = ref(false)
-const pengadaanList = ref([])
-const barangList = ref([])
+const items = ref([]) // barang list
+const jenisBarangList = ref([])
 const search = ref('')
-const statusFilter = ref('')
 const alert = ref({ message: '', type: 'success' })
 
-const form = ref({
-  unique_id: '',
-  id_barang: '',
-  jumlah_barang: 0,
-  tanggal_pengadaan: '',
-  supplier: '',
-  keterangan: ''
-})
+const editingItem = ref(null)
 
 const pagination = ref({
   current_page: 1,
@@ -69,134 +73,106 @@ const alertClass = computed(() =>
 // Methods
 const fetchData = async (page = 1) => {
   loading.value = true
-  logger.info('Fetching pengadaan data', { page, search: search.value, status: statusFilter.value })
+  logger.info('Fetching barang data', { page, search: search.value })
   
   try {
-    const params = {
-      page,
-      search: search.value || undefined,
-      status: statusFilter.value || undefined
-    }
-    
-    const response = await API.get('/gudang', { params })
-    pengadaanList.value = response.data.data
-    
+    const params = { page, search: search.value || undefined }
+    const response = await API.get('/barang', { params })
+    items.value = response.data.data || []
     if (response.data.meta) {
       pagination.value = response.data.meta
     }
-    
-    logger.success('Pengadaan data loaded successfully', { count: pengadaanList.value.length })
-  } catch (error) {
-    logger.error('Error fetching pengadaan:', error.message)
-    showAlert('Gagal memuat data pengadaan', 'error')
-  } finally {
-    loading.value = false
-  }
-}
-
-const fetchBarang = async () => {
-  logger.debug('Fetching barang data for pengadaan')
-  try {
-    const response = await API.get('/barang')
-    barangList.value = response.data.data
-    logger.success('Barang data loaded for pengadaan', { count: barangList.value.length })
+    logger.success('Barang data loaded successfully', { count: items.value.length })
   } catch (error) {
     logger.error('Error fetching barang:', error.message)
     showAlert('Gagal memuat data barang', 'error')
-  }
-}
-
-const submitForm = async () => {
-  loading.value = true
-  logger.info('Submitting pengadaan form', { 
-    mode: editMode.value ? 'edit' : 'create',
-    id_barang: form.value.id_barang,
-    jumlah_barang: form.value.jumlah_barang
-  })
-  
-  try {
-    const payload = {
-      ...form.value,
-      unique_id: userStore.user.unique_id
-    }
-    
-    if (editMode.value) {
-      await API.put(`/gudang/${payload.unique_id}/${payload.id_barang}`, payload)
-      logger.success('Gudang entry updated successfully', { unique_id: payload.unique_id, id_barang: payload.id_barang })
-      showAlert('Data gudang berhasil diupdate', 'success')
-    } else {
-      await API.post('/gudang', payload)
-      logger.success('Gudang entry created successfully', { unique_id: payload.unique_id, id_barang: payload.id_barang })
-      showAlert('Data gudang berhasil ditambahkan', 'success')
-    }
-    
-    resetForm()
-    fetchData()
-  } catch (error) {
-    logger.error('Error saving pengadaan:', error.message, { form: form.value })
-    const errorMsg = error.response?.data?.message || 'Gagal menyimpan pengadaan'
-    showAlert(errorMsg, 'error')
   } finally {
     loading.value = false
   }
 }
 
-const editItem = (item) => {
-  logger.info('Editing gudang entry', { 
-    unique_id: item.unique_id,
+const fetchJenisBarang = async () => {
+  logger.debug('Fetching jenis barang list')
+  try {
+    const response = await API.get('/jenis-barang')
+    jenisBarangList.value = response.data.data || []
+    logger.success('Jenis barang loaded', { count: jenisBarangList.value.length })
+  } catch (error) {
+    logger.error('Error fetching jenis barang:', error.message)
+    showAlert('Gagal memuat jenis barang', 'error')
+  }
+}
+
+const handleSave = async (form) => {
+  loading.value = true
+  logger.info('Saving barang', { mode: editMode.value ? 'edit' : 'create', form })
+  try {
+    if (editMode.value && form.id_barang) {
+      await API.put(`/barang/${form.id_barang}`, form)
+      logger.success('Barang updated successfully', { id_barang: form.id_barang })
+      showAlert('Barang berhasil diupdate', 'success')
+    } else {
+      await API.post('/barang', form)
+      logger.success('Barang created successfully', { nama_barang: form.nama_barang })
+      showAlert('Barang berhasil ditambahkan', 'success')
+    }
+    resetForm()
+    fetchData()
+  } catch (error) {
+    logger.error('Error saving barang:', error.message, { form })
+    const msg = error.response?.data?.message || 'Gagal menyimpan barang'
+    showAlert(msg, 'error')
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleEdit = (item) => {
+  logger.info('Editing barang', { id_barang: item.id_barang, nama_barang: item.nama_barang })
+  editingItem.value = {
     id_barang: item.id_barang,
-    barang: item.barang?.nama_barang 
-  })
-  
-  form.value = {
-    unique_id: item.unique_id,
-    id_barang: item.id_barang,
-    jumlah_barang: item.jumlah_barang,
-    tanggal_pengadaan: item.tanggal_pengadaan || '',
-    supplier: item.supplier || '',
-    keterangan: item.keterangan || ''
+    id_jenis_barang: item.id_jenis_barang,
+    nama_barang: item.nama_barang,
+    harga_barang: item.harga_barang,
   }
   editMode.value = true
   showForm.value = true
 }
 
-const deleteItem = async (item) => {
-  if (confirm(`Yakin ingin menghapus data gudang "${item.barang?.nama_barang}"?`)) {
-    logger.info('Deleting gudang entry', { 
-      unique_id: item.unique_id,
-      id_barang: item.id_barang,
-      barang: item.barang?.nama_barang 
-    })
-    
+const handleDelete = async (item) => {
+  if (confirm(`Yakin ingin menghapus barang "${item.nama_barang}"?`)) {
+    logger.info('Deleting barang', { id_barang: item.id_barang, nama_barang: item.nama_barang })
     try {
-      await API.delete(`/gudang/${item.unique_id}/${item.id_barang}`)
-      logger.success('Gudang entry deleted successfully', { unique_id: item.unique_id, id_barang: item.id_barang })
-      showAlert('Data gudang berhasil dihapus', 'success')
+      await API.delete(`/barang/${item.id_barang}`)
+      logger.success('Barang deleted successfully', { id_barang: item.id_barang })
+      showAlert('Barang berhasil dihapus', 'success')
       fetchData()
     } catch (error) {
-      logger.error('Error deleting gudang entry:', error.message, { unique_id: item.unique_id, id_barang: item.id_barang })
-      const errorMsg = error.response?.data?.message || 'Gagal menghapus data gudang'
+      logger.error('Error deleting barang:', error.message, { id_barang: item.id_barang })
+      const errorMsg = error.response?.data?.message || 'Gagal menghapus barang'
       showAlert(errorMsg, 'error')
     }
   }
 }
 
 const resetForm = () => {
-  logger.debug('Resetting gudang form')
-  form.value = {
-    unique_id: '',
-    id_barang: '',
-    jumlah_barang: 0,
-    tanggal_pengadaan: '',
-    supplier: '',
-    keterangan: ''
-  }
+  logger.debug('Resetting barang form')
+  editingItem.value = null
   editMode.value = false
   showForm.value = false
 }
 
-const handleSearch = () => {
-  logger.debug('Searching pengadaan', { search: search.value, status: statusFilter.value })
+const toggleForm = () => {
+  if (showForm.value) {
+    resetForm()
+  } else {
+    showForm.value = true
+  }
+}
+
+const handleSearch = (q) => {
+  search.value = q
+  logger.debug('Searching barang', { search: search.value })
   pagination.value.current_page = 1
   fetchData()
 }
@@ -236,7 +212,7 @@ onMounted(async () => {
   logger.info('PengadaanBarang page mounted')
   await Promise.all([
     fetchData(),
-    fetchBarang()
+    fetchJenisBarang()
   ])
 })
 </script>
