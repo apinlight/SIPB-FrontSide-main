@@ -18,7 +18,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
-    }
+    },
+    // ✅ Ensure only one instance of these singletons is bundled
+    dedupe: ['vue', 'pinia']
   },
   build: {
     outDir: 'dist',
