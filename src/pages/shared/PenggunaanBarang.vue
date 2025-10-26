@@ -35,7 +35,7 @@
       <!-- Table Section -->
       <PenggunaanBarangTable
         :items="penggunaanBarangStore.penggunaanList"
-        :loading="penggunaanBarangStore.isLoading"
+        :loading="penggunaanBarangStore.loading"
         :pagination="penggunaanBarangStore.pagination"
         :show-user="userStore.isAdmin || userStore.isManager"
         :readonly="false"
