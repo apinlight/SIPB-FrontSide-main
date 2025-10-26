@@ -2,10 +2,10 @@
   <DefaultLayout>
     <div class="p-6">
       <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">⚠️ Kelola Batas Barang</h1>
-        <button @click="openForm()" class="bg-green-600 text-white px-4 py-2 rounded">
+        <h1 class="text-2xl font-bold text-gray-800">⚠️ Kelola Batas Barang</h1>
+        <BaseButton @click="openForm()" variant="primary">
           + Set Batas Barang
-        </button>
+        </BaseButton>
       </div>
       </div>
   </DefaultLayout>
@@ -16,6 +16,7 @@ import { ref, onMounted, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { usePengaturanStore } from '@/stores/pengaturanStore';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
+import BaseButton from '@/components/BaseButton.vue'
 
 const store = usePengaturanStore();
 const { barangList, loading, getBatasWithStatus } = storeToRefs(store);

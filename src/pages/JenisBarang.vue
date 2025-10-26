@@ -2,13 +2,13 @@
   <DefaultLayout>
     <div class="p-6">
       <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">🏷️ Kelola Jenis Barang</h1>
-        <button @click="openForm()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        <h1 class="text-2xl font-bold text-gray-800">🏷️ Kelola Jenis Barang</h1>
+        <BaseButton @click="openForm()" variant="primary">
           + Tambah Jenis Barang
-        </button>
+        </BaseButton>
       </div>
 
-      <div v-if="showForm" class="bg-white p-4 rounded-lg shadow mb-6">
+      <div v-if="showForm" class="bg-white p-4 sm:p-6 rounded-xl shadow mb-6">
         <h2 class="text-lg font-semibold mb-4">
           {{ editMode ? 'Edit Jenis Barang' : 'Tambah Jenis Barang' }}
         </h2>
@@ -32,13 +32,13 @@
               placeholder="Deskripsi singkat"
             />
           </div>
-          <div class="flex gap-2">
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded" :disabled="loading">
-              {{ loading ? 'Menyimpan...' : (editMode ? 'Update' : 'Simpan') }}
-            </button>
-            <button type="button" @click="closeForm" class="bg-gray-500 text-white px-4 py-2 rounded">
+          <div class="flex flex-col sm:flex-row gap-2">
+            <BaseButton type="submit" variant="primary" :loading="loading" :disabled="loading" fullWidth>
+              {{ editMode ? 'Update' : 'Simpan' }}
+            </BaseButton>
+            <BaseButton type="button" variant="secondary" @click="closeForm" fullWidth>
               Batal
-            </button>
+            </BaseButton>
           </div>
         </form>
       </div>
@@ -50,7 +50,8 @@
         <div v-else-if="itemList.length === 0" class="p-8 text-center text-gray-500">
           Belum ada data jenis barang.
         </div>
-        <table v-else class="w-full">
+        <!-- Desktop Table -->
+        <table v-else class="w-full hidden md:table">
           <thead class="bg-gray-50">
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium uppercase">ID</th>
@@ -63,12 +64,28 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm">{{ item.id_jenis_barang }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">{{ item.nama_jenis_barang }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                <button @click="editItem(item)" class="text-blue-600 hover:text-blue-800 font-medium">Edit</button>
-                <button @click="handleDelete(item)" class="text-red-600 hover:text-red-800 font-medium">Hapus</button>
+                <BaseButton size="sm" variant="secondary" @click="editItem(item)">Edit</BaseButton>
+                <BaseButton size="sm" variant="danger" @click="handleDelete(item)">Hapus</BaseButton>
               </td>
             </tr>
           </tbody>
         </table>
+
+        <!-- Mobile Cards -->
+        <div class="md:hidden divide-y">
+          <div v-for="item in itemList" :key="item.id_jenis_barang" class="p-4">
+            <div class="flex justify-between items-start gap-3">
+              <div>
+                <h3 class="font-semibold text-gray-900">{{ item.nama_jenis_barang }}</h3>
+                <p class="text-xs text-gray-500">ID: {{ item.id_jenis_barang }}</p>
+              </div>
+            </div>
+            <div class="flex gap-2 mt-3">
+              <BaseButton size="sm" variant="secondary" fullWidth @click="editItem(item)">Edit</BaseButton>
+              <BaseButton size="sm" variant="danger" fullWidth @click="handleDelete(item)">Hapus</BaseButton>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </DefaultLayout>
@@ -79,6 +96,7 @@ import { ref, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import { useJenisBarangStore } from '@/stores/jenisBarangStore';
+import BaseButton from '@/components/BaseButton.vue'
 
 const store = useJenisBarangStore();
 

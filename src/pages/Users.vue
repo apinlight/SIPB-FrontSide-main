@@ -6,6 +6,7 @@ import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import { useUserStore } from '@/stores/userStore';
 import { useUserManagementStore } from '@/stores/userManagementStore'; // ✅ Import the new store
 import { logger } from '@/lib/logger';
+import BaseButton from '@/components/BaseButton.vue'
 
 // --- STORES ---
 const userStore = useUserStore();
@@ -129,25 +130,25 @@ onMounted(() => {
   <DefaultLayout>
     <div class="p-6">
       <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">👥 Kelola User</h1>
-        <button
+        <h1 class="text-2xl font-bold text-gray-800">👥 Kelola User</h1>
+        <BaseButton
           v-if="canCreateUsers"
           @click="showForm = !showForm; resetForm()"
-          class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          variant="primary"
         >
           {{ showForm ? 'Tutup Form' : '+ Tambah User' }}
-        </button>
+        </BaseButton>
       </div>
 
       <div v-if="error" class="p-3 rounded mb-4 bg-red-100 text-red-800 border border-red-200">
         {{ error }}
       </div>
 
-      <div v-if="showForm && canCreateUsers" class="bg-white p-4 rounded-lg shadow mb-6">
+      <div v-if="showForm && canCreateUsers" class="bg-white p-4 sm:p-6 rounded-xl shadow mb-6">
         <h2 class="text-lg font-semibold mb-4">
           {{ editMode ? 'Edit User' : 'Tambah User' }}
         </h2>
-        <form @submit.prevent="handleSubmit">
+        <form @submit.prevent="handleSubmit" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div>
               <label class="block text-sm font-medium mb-2">Unique ID</label>
@@ -218,27 +219,19 @@ onMounted(() => {
             </div>
           </div>
           
-          <div class="flex gap-2 mt-6">
-            <button
-              type="submit"
-              class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-              :disabled="loading"
-            >
-              {{ loading ? 'Menyimpan...' : (editMode ? 'Update' : 'Simpan') }}
-            </button>
-            <button
-              type="button"
-              @click="resetForm"
-              class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-            >
+          <div class="flex flex-col sm:flex-row gap-2 mt-4">
+            <BaseButton type="submit" variant="primary" :disabled="loading" :loading="loading" fullWidth>
+              {{ editMode ? 'Update' : 'Simpan' }}
+            </BaseButton>
+            <BaseButton type="button" variant="secondary" @click="resetForm" fullWidth>
               Batal
-            </button>
+            </BaseButton>
           </div>
         </form>
       </div>
 
-      <div class="bg-white p-4 rounded-lg shadow mb-6">
-        <div class="flex gap-4">
+      <div class="bg-white p-4 rounded-xl shadow mb-6">
+        <div class="flex flex-col sm:flex-row gap-3">
           <input
             v-model="filters.search"
             @input="handleSearch"
@@ -266,7 +259,8 @@ onMounted(() => {
         <div v-else-if="users.length === 0" class="p-8 text-center text-gray-500">
           Tidak ada data user ditemukan
         </div>
-        <table v-else class="w-full">
+        <!-- Desktop Table -->
+        <table v-else class="w-full hidden md:table">
           <thead class="bg-gray-50">
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
@@ -296,28 +290,46 @@ onMounted(() => {
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                <button v-if="canEditUser(user)" @click="handleEdit(user)" class="text-blue-600 hover:text-blue-800 font-medium">Edit</button>
-                <button v-if="canDeleteUser(user)" @click="handleDelete(user)" class="text-red-600 hover:text-red-800 font-medium">Hapus</button>
+                <BaseButton v-if="canEditUser(user)" size="sm" variant="secondary" @click="handleEdit(user)">Edit</BaseButton>
+                <BaseButton v-if="canDeleteUser(user)" size="sm" variant="danger" @click="handleDelete(user)">Hapus</BaseButton>
                 <span v-if="!canEditUser(user) && !canDeleteUser(user)" class="text-gray-400">No Access</span>
               </td>
             </tr>
           </tbody>
         </table>
+
+        <!-- Mobile Cards -->
+        <div class="md:hidden divide-y">
+          <div v-for="user in users" :key="user.id" class="p-4">
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="font-semibold text-gray-900">{{ user.username }}</h3>
+                <p class="text-xs text-gray-500">{{ user.email }}</p>
+                <p class="text-xs text-gray-500">Cabang: {{ user.branch_name }}</p>
+              </div>
+              <span
+                v-if="user.roles && user.roles.length > 0"
+                :class="getRoleBadgeClass(user.roles[0]?.name || user.role || 'user')"
+                class="px-2 py-1 text-xs font-medium rounded-full"
+              >
+                {{ user.roles[0]?.name || user.role || 'user' }}
+              </span>
+            </div>
+            <div class="flex gap-2 mt-3">
+              <BaseButton v-if="canEditUser(user)" size="sm" variant="secondary" fullWidth @click="handleEdit(user)">Edit</BaseButton>
+              <BaseButton v-if="canDeleteUser(user)" size="sm" variant="danger" fullWidth @click="handleDelete(user)">Hapus</BaseButton>
+            </div>
+          </div>
+        </div>
         
-        <div v-if="pagination.last_page > 1" class="bg-gray-50 px-6 py-3 flex justify-between items-center">
+        <div v-if="pagination.last_page > 1" class="bg-gray-50 px-4 sm:px-6 py-3 flex flex-col sm:flex-row gap-3 sm:gap-0 sm:justify-between sm:items-center">
           <div class="text-sm text-gray-700">
             Menampilkan {{ pagination.from }} - {{ pagination.to }} dari {{ pagination.total }} data
           </div>
-          <div class="flex gap-2">
-            <button @click="changePage(pagination.current_page - 1)" :disabled="pagination.current_page === 1" class="px-3 py-1 border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100">
-              Sebelumnya
-            </button>
-            <span class="px-3 py-1 text-sm">
-              {{ pagination.current_page }} / {{ pagination.last_page }}
-            </span>
-            <button @click="changePage(pagination.current_page + 1)" :disabled="pagination.current_page === pagination.last_page" class="px-3 py-1 border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100">
-              Berikutnya
-            </button>
+          <div class="flex items-center gap-2">
+            <BaseButton size="sm" variant="secondary" @click="changePage(pagination.current_page - 1)" :disabled="pagination.current_page === 1">Sebelumnya</BaseButton>
+            <span class="px-2 py-1 text-sm">{{ pagination.current_page }} / {{ pagination.last_page }}</span>
+            <BaseButton size="sm" variant="secondary" @click="changePage(pagination.current_page + 1)" :disabled="pagination.current_page === pagination.last_page">Berikutnya</BaseButton>
           </div>
         </div>
       </div>
