@@ -1,14 +1,17 @@
 <template>
     <DefaultLayout>
-        <div class="p-6 space-y-6">
-            <h1 class="text-2xl font-bold">Pengajuan Pengadaan Barang</h1>
+        <div class="p-4 sm:p-6 space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow">
+                <h1 class="text-2xl font-bold text-gray-800">📝 Pengajuan Pengadaan Barang</h1>
+                <p class="text-gray-600 mt-1">Ajukan permintaan pengadaan barang baru</p>
+            </div>
 
             <div v-if="error" class="p-3 rounded mb-4 bg-red-100 text-red-800 border-red-200">
                 {{ error }}
             </div>
 
-            <div class="bg-white rounded-lg shadow p-4">
-                <h3 class="text-lg font-semibold mb-3">Status Pengajuan Bulanan Anda</h3>
+                <div class="bg-white rounded-xl shadow p-4 sm:p-6">
+                    <h3 class="text-lg font-semibold mb-3">📊 Status Pengajuan Bulanan Anda</h3>
                 <div v-if="userStore.isAdmin" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="bg-blue-50 p-4 rounded-lg">
                         <h4 class="text-sm font-medium text-blue-700">Pengajuan Bulan Ini</h4>
@@ -41,8 +44,8 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-4">
-                <h2 class="text-lg font-semibold mb-4">Pilih Barang</h2>
+                <div class="bg-white rounded-xl shadow p-4 sm:p-6">
+                    <h2 class="text-lg font-semibold mb-4">🛒 Pilih Barang</h2>
                 <div v-if="loading" class="text-center py-8 text-gray-500">
                     Memuat data barang...
                 </div>

@@ -14,21 +14,22 @@
       </div>
 
       <div class="bg-white p-4 rounded-xl shadow">
-        <div class="flex gap-4 items-center">
-          <div class="flex-1">
+        <div class="flex flex-col sm:flex-row gap-3 items-center">
+          <div class="flex-1 w-full">
             <input
               :value="filterQuery"
               @input="store.setFilter($event.target.value)"
               type="text"
               placeholder="Cari nama barang..."
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
         </div>
       </div>
 
       <div class="bg-white rounded-xl shadow overflow-hidden">
-        <div class="overflow-x-auto">
+        <!-- Desktop Table -->
+        <div class="hidden md:block overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
@@ -61,6 +62,31 @@
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Mobile Cards -->
+        <div class="md:hidden divide-y">
+          <div v-if="isLoading" class="p-8 text-center text-gray-500">
+            Memuat data...
+          </div>
+          <div v-else-if="filteredStock.length === 0" class="p-8 text-center text-gray-500">
+            {{ filterQuery ? 'Tidak ada barang yang sesuai' : 'Belum ada stok barang' }}
+          </div>
+          <div v-else v-for="item in filteredStock" :key="item.id_barang" class="p-4">
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <h3 class="font-semibold text-gray-900">{{ item.nama_barang }}</h3>
+                <p class="text-xs text-gray-500">Kode: {{ item.id_barang }}</p>
+                <p class="text-xs text-gray-500">Jenis: {{ item.jenis_barang }}</p>
+              </div>
+              <span :class="getStockBadgeClass(item.jumlah_tersedia)">
+                {{ getStockStatus(item.jumlah_tersedia) }}
+              </span>
+            </div>
+            <div class="mt-2">
+              <span class="text-sm font-medium">Stok: {{ item.jumlah_tersedia }} unit</span>
+            </div>
+          </div>
         </div>
       </div>
 

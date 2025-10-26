@@ -2,10 +2,10 @@
   <DefaultLayout>
     <div class="p-6">
       <div class="flex items-center justify-between mb-4">
-        <h1 class="text-2xl font-bold">Daftar Barang</h1>
-        <button v-if="userStore.isAdmin" @click="toggleForm" class="bg-green-600 text-white px-4 py-2 rounded">
+        <h1 class="text-2xl font-bold text-gray-800">📦 Daftar Barang</h1>
+        <BaseButton v-if="userStore.isAdmin" @click="toggleForm" variant="primary">
           {{ showForm ? 'Tutup Form' : '+ Tambah Barang' }}
-        </button>
+        </BaseButton>
       </div>
 
       <BarangForm
@@ -37,6 +37,7 @@ import { useJenisBarangStore } from '@/stores/jenisBarangStore'; // Also need th
 import BarangForm from '@/components/BarangForm.vue';
 import BarangTable from '@/components/BarangTable.vue';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
+import BaseButton from '@/components/BaseButton.vue';
 
 const userStore = useUserStore();
 const barangStore = useBarangStore();
