@@ -69,7 +69,7 @@
               </BaseButton>
               <BaseButton
                 size="sm"
-                :variant="pengajuan.status_pengajuan === 'Selesai' ? 'secondary' : 'success'"
+                :variant="pengajuan.status_pengajuan === 'Selesai' ? 'secondary' : 'primary'"
                 @click="handleTambahKeGudang(pengajuan)"
                 :disabled="processing || pengajuan.status_pengajuan === 'Selesai'"
                 :loading="processing && pengajuan.status_pengajuan !== 'Selesai'"

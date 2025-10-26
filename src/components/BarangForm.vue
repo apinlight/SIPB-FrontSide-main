@@ -52,6 +52,7 @@
 
 <script setup>
 import { ref, watch } from 'vue';
+import BaseButton from './BaseButton.vue';
 
 const props = defineProps({
   editData: { type: Object, default: null },
