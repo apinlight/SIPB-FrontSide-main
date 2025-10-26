@@ -284,8 +284,12 @@ onMounted(() => {
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.email }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.branch_name }}</td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span v-if="user.roles && user.roles.length > 0" :class="getRoleBadgeClass(user.roles[0].name)" class="px-2 py-1 text-xs font-medium rounded-full">
-                  {{ user.roles[0].name }}
+                <span
+                  v-if="user.roles && user.roles.length > 0"
+                  :class="getRoleBadgeClass(user.roles[0]?.name || user.role || 'user')"
+                  class="px-2 py-1 text-xs font-medium rounded-full"
+                >
+                  {{ user.roles[0]?.name || user.role || 'user' }}
                 </span>
                 <span v-else class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
                   No Role

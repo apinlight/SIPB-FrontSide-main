@@ -34,11 +34,15 @@
 
       <!-- Table Section -->
       <PenggunaanBarangTable
+        :items="penggunaanBarangStore.penggunaanList"
+        :loading="penggunaanBarangStore.isLoading"
+        :pagination="penggunaanBarangStore.pagination"
         :show-user="userStore.isAdmin || userStore.isManager"
         :readonly="false"
         @edit="handleEdit"
         @approve="handleApprove"
         @reject="handleReject"
+        @change-page="handlePageChange"
         @saved="handleTableAction"
         ref="tableRef"
       />
@@ -47,17 +51,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { toast } from 'vue3-toastify'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import PenggunaanBarangForm from '@/components/PenggunaanBarangForm.vue'
 import PenggunaanBarangTable from '@/components/PenggunaanBarangTable.vue'
 import { useUserStore } from '@/stores/userStore'
+import { usePenggunaanBarangStore } from '@/stores/penggunaanBarangStore'
 import API from '@/lib/api'
 import { logger } from '@/lib/logger'
 
 const userStore = useUserStore()
+const penggunaanBarangStore = usePenggunaanBarangStore()
 const showForm = ref(false)
 const editingPenggunaan = ref(null)
 const tableRef = ref(null)
@@ -92,7 +98,7 @@ const getRoleBadgeClass = () => {
 const handleFormSaved = (data) => {
   showForm.value = false
   editingPenggunaan.value = null
-  tableRef.value?.fetchPenggunaanBarang()
+  penggunaanBarangStore.fetchPenggunaanBarang()
   toast.success('Penggunaan barang berhasil disimpan')
 }
 
@@ -117,7 +123,7 @@ const handleApprove = async (penggunaan) => {
     
     if (response.data.success) {
       toast.success('Penggunaan barang berhasil disetujui')
-      tableRef.value?.fetchPenggunaanBarang()
+      penggunaanBarangStore.fetchPenggunaanBarang()
     }
   } catch (err) {
     logger.error('Failed to approve penggunaan barang:', err.response?.data?.message || err.message)
@@ -136,7 +142,7 @@ const handleReject = async (penggunaan) => {
     
     if (response.data.success) {
       toast.success('Penggunaan barang berhasil ditolak')
-      tableRef.value?.fetchPenggunaanBarang()
+      penggunaanBarangStore.fetchPenggunaanBarang()
     }
   } catch (err) {
     logger.error('Failed to reject penggunaan barang:', err.response?.data?.message || err.message)
@@ -151,4 +157,20 @@ const handleTableAction = (result) => {
     toast.error(result.message)
   }
 }
+
+const handlePageChange = (page) => {
+  penggunaanBarangStore.fetchPenggunaanBarang({ page })
+}
+
+// Fetch data on component mount
+onMounted(async () => {
+  try {
+    logger.debug('Mounting PenggunaanBarang component, fetching data...')
+    await penggunaanBarangStore.fetchPenggunaanBarang()
+    logger.success('PenggunaanBarang data loaded successfully')
+  } catch (error) {
+    logger.error('Failed to load penggunaan barang data:', error)
+    toast.error('Gagal memuat data penggunaan barang')
+  }
+})
 </script>

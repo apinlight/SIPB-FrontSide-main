@@ -102,7 +102,7 @@
       </div>
 
       <div class="mt-6 flex justify-end">
-        <button @click="exportLaporan" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700" :disabled="loading">
+        <button @click="() => exportLaporan('summary')" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700" :disabled="loading">
           📊 Export Excel
         </button>
       </div>

@@ -87,8 +87,24 @@
         </button>
       </div>
 
-      <div v-if="selectedPengajuan" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click="closeDetail">
+      <div v-if="selectedPengajuan" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="closeDetail">
+        <div class="bg-white rounded-lg shadow-lg p-8 max-w-lg w-full relative" @click.stop>
+          <button class="absolute top-2 right-2 text-gray-500 hover:text-gray-700" @click="closeDetail">&times;</button>
+          <h2 class="text-xl font-bold mb-4">Detail Pengajuan {{ selectedPengajuan.id_pengajuan }}</h2>
+          <div class="mb-2"><b>Diajukan oleh:</b> {{ selectedPengajuan.user?.username }} ({{ selectedPengajuan.user?.branch_name }})</div>
+          <div class="mb-2"><b>Tanggal:</b> {{ formatDate(selectedPengajuan.created_at) }}</div>
+          <div class="mb-2"><b>Status:</b> {{ selectedPengajuan.status_pengajuan }}</div>
+          <div class="mb-2"><b>Daftar Barang:</b></div>
+          <ul class="list-disc pl-5 mb-2">
+            <li v-for="detail in selectedPengajuan.details" :key="detail.id_detail_pengajuan">
+              {{ detail.barang?.nama_barang }} - {{ detail.jumlah }} unit (Rp {{ formatCurrency(detail.barang?.harga_barang) }})
+            </li>
+          </ul>
+          <div class="mt-4 font-semibold text-green-700">
+            Total Estimasi: Rp {{ formatCurrency(getTotalHarga(selectedPengajuan)) }}
           </div>
+        </div>
+      </div>
     </div>
   </DefaultLayout>
 </template>
@@ -124,9 +140,15 @@ const changePage = (page) => {
   }
 }
 
-const handleApprove = (pengajuan) => {
-  if (confirm(`Setujui pengajuan ${pengajuan.id_pengajuan}?`)) {
-    store.approvePengajuan(pengajuan.id_pengajuan);
+const handleApprove = async (pengajuan) => {
+  const confirmMessage = `Setujui pengajuan ${pengajuan.id_pengajuan}?\n\nItems yang akan disetujui:\n${
+    pengajuan.details?.map(detail => 
+      `• ${detail.barang?.nama_barang}: ${detail.jumlah} unit`
+    ).join('\n') || 'Loading items...'
+  }\n\nCatatan: Stok akan divalidasi saat persetujuan diproses.`;
+  
+  if (confirm(confirmMessage)) {
+    await store.approvePengajuan(pengajuan.id_pengajuan);
   }
 };
 
