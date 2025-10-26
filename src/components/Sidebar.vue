@@ -34,7 +34,7 @@ const allMenu = [
       { name: 'Daftar Barang', path: '/daftar-barang', emoji: '📥', roles: ['admin', 'manager', 'user'] },
       { name: 'Pengajuan Barang', path: '/user/pengajuan', emoji: '📝', roles: ['user'] },
       { name: 'Riwayat Pengajuan', path: '/user/riwayat', emoji: '🕘', roles: ['admin', 'manager', 'user'] },
-      { name: 'Persetujuan Pengadaan', path: '/admin/persetujuan', emoji: '✅', roles: ['admin'] },
+        { name: 'Persetujuan Pengadaan', path: '/admin/persetujuan', emoji: '✅', roles: ['admin', 'manager'] },
       { name: 'Pengadaan Disetujui', path: '/admin/pengadaan-disetujui', emoji: '📋', roles: ['admin'] },
       { name: 'Pengadaan Manual', path: '/admin/pengadaan-manual', emoji: '✏️', roles: ['admin'] }
     ]
@@ -44,7 +44,7 @@ const allMenu = [
     emoji: '🔧',
     roles: ['admin', 'manager', 'user'],
     children: [
-      { name: 'Kelola Penggunaan', path: '/penggunaan-barang', emoji: '📋', roles: ['user'] },
+        { name: 'Kelola Penggunaan', path: '/penggunaan-barang', emoji: '📋', roles: ['admin', 'manager', 'user'] },
       { name: 'Stok Tersedia', path: '/stok-tersedia', emoji: '📊', roles: ['admin', 'manager', 'user'] }
     ]
   },

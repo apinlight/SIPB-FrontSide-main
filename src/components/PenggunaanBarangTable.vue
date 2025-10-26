@@ -21,7 +21,7 @@
           <tr v-if="loading">
             <td :colspan="colspan" class="px-6 py-4 text-center text-gray-500">Memuat data...</td>
           </tr>
-          <tr v-else-if="items.length === 0">
+          <tr v-else-if="!items || items.length === 0">
             <td :colspan="colspan" class="px-6 py-4 text-center text-gray-500">Belum ada data.</td>
           </tr>
           <tr v-else v-for="item in items" :key="item.id_penggunaan" class="hover:bg-gray-50">
@@ -63,9 +63,15 @@ import BaseButton from './BaseButton.vue';
 import { useUserStore } from '@/stores/userStore';
 
 const props = defineProps({
-  items: { type: Array, required: true },
+  items: { type: Array, required: true, default: () => [] },
   loading: { type: Boolean, default: false },
-  pagination: { type: Object, required: true },
+  pagination: { type: Object, required: true, default: () => ({
+    current_page: 1,
+    last_page: 1,
+    from: 0,
+    to: 0,
+    total: 0
+  }) },
   showUser: { type: Boolean, default: false },
 });
 

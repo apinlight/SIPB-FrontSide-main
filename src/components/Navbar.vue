@@ -4,7 +4,7 @@
       <button class="md:hidden mr-2 text-2xl" @click="$emit('toggle-sidebar')" aria-label="Open sidebar">
         &#9776;
       </button>
-      <h1 class="text-2xl font-semibold text-gray-800 items-center">SIPB</h1>
+      <h1 class="text-2xl font-semibold text-gray-800 items-center">SIMBA</h1>
     </div>
     <div class="flex items-center gap-4">
       <span class="text-gray-600">
