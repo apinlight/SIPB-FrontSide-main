@@ -72,6 +72,7 @@
                 :variant="pengajuan.status_pengajuan === 'Selesai' ? 'secondary' : 'success'"
                 @click="handleTambahKeGudang(pengajuan)"
                 :disabled="processing || pengajuan.status_pengajuan === 'Selesai'"
+                :loading="processing && pengajuan.status_pengajuan !== 'Selesai'"
                 fullWidth
               >
                 {{ pengajuan.status_pengajuan === 'Selesai' ? 'Sudah di Gudang' : 'Tambah ke Gudang' }}

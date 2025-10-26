@@ -67,10 +67,10 @@
               <BaseButton size="sm" variant="secondary" @click="showDetail(pengajuan)" fullWidth>
                 Detail
               </BaseButton>
-              <BaseButton size="sm" variant="success" @click="handleApprove(pengajuan)" :disabled="processing" fullWidth>
+              <BaseButton size="sm" variant="success" @click="handleApprove(pengajuan)" :disabled="processing" :loading="processing" fullWidth>
                 Setujui
               </BaseButton>
-              <BaseButton size="sm" variant="danger" @click="handleReject(pengajuan)" :disabled="processing" fullWidth>
+              <BaseButton size="sm" variant="danger" @click="handleReject(pengajuan)" :disabled="processing" :loading="processing" fullWidth>
                 Tolak
               </BaseButton>
             </div>
