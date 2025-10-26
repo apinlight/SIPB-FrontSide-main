@@ -6,10 +6,14 @@
     </div>
 
     <div class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-bold">Manajemen Barang</h1>
-      <button @click="toggleForm" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+      <h1 class="text-2xl font-bold text-gray-800">Manajemen Barang</h1>
+      <BaseButton 
+        variant="primary" 
+        size="md" 
+        @click="toggleForm"
+      >
         {{ showForm ? 'Tutup Form' : '+ Tambah Barang' }}
-      </button>
+      </BaseButton>
     </div>
 
     <BarangForm
@@ -41,6 +45,7 @@ import { toast } from 'vue3-toastify'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import BarangForm from '@/components/BarangForm.vue'
 import BarangTable from '@/components/BarangTable.vue'
+import BaseButton from '@/components/BaseButton.vue'
 import { useUserStore } from '@/stores/userStore'
 import { logger } from '@/lib/logger'
 

@@ -27,6 +27,7 @@
       <div v-if="showForm">
         <PenggunaanBarangForm
           :penggunaan="editingPenggunaan"
+          :availableStock="penggunaanBarangStore.availableStock"
           @saved="handleFormSaved"
           @cancel="handleFormCancel"
         />
@@ -51,7 +52,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { toast } from 'vue3-toastify'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import BaseButton from '@/components/BaseButton.vue'
@@ -169,6 +170,17 @@ onMounted(async () => {
   } catch (error) {
     logger.error('Failed to load penggunaan barang data:', error)
     toast.error('Gagal memuat data penggunaan barang')
+  }
+})
+
+// Load available stock whenever form opens
+watch(showForm, async (open) => {
+  if (open) {
+    try {
+      await penggunaanBarangStore.fetchAvailableStock()
+    } catch (_) {
+      // Feedback already handled in store/logger
+    }
   }
 })
 </script>
