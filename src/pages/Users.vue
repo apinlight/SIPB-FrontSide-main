@@ -38,7 +38,7 @@ const canManageUsers = computed(() => userStore.isAdmin || userStore.isManager);
 const canCreateUsers = computed(() => userStore.isAdmin);
 
 const canDeleteUser = (user) => {
-  return userStore.isAdmin && user.id !== userStore.user?.id;
+  return userStore.isAdmin && user.unique_id !== userStore.user?.unique_id;
 };
 
 const canEditUser = (user) => {
@@ -46,7 +46,7 @@ const canEditUser = (user) => {
   if (userStore.isManager) {
     return user.branch_name === userStore.user?.branch_name;
   }
-  return user.id === userStore.user?.id;
+  return user.unique_id === userStore.user?.unique_id;
 };
 
 // --- METHODS (Delegating to Store) ---
@@ -63,14 +63,14 @@ const handleEdit = (user) => {
     toast.error('Anda tidak memiliki akses untuk mengedit user ini');
     return;
   }
-  logger.info('Editing user', { userId: user.id, username: user.username });
+  logger.info('Editing user', { userId: user.unique_id, username: user.username });
   form.value = {
-    unique_id: user.id,
+    unique_id: user.unique_id,
     username: user.username,
     email: user.email,
     password: '',
     branch_name: user.branch_name,
-    role: user.roles?.[0]?.name || ''
+    role: getUserRole(user)
   };
   editMode.value = true;
   showForm.value = true;
@@ -113,6 +113,15 @@ const getRoleBadgeClass = (roleName) => {
     'user': 'bg-green-100 text-green-800',
   };
   return roleClasses[roleName] || 'bg-gray-100 text-gray-800';
+};
+
+// Helper to get the role name from user object
+const getUserRole = (user) => {
+  // Backend sends roles as array of strings: ["admin"] or ["manager"]
+  if (Array.isArray(user.roles) && user.roles.length > 0) {
+    return user.roles[0]; // First role is a string
+  }
+  return user.role || 'user'; // Fallback
 };
 
 // --- LIFECYCLE HOOK ---
@@ -272,18 +281,18 @@ onMounted(() => {
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.id }}</td>
+            <tr v-for="user in users" :key="user.unique_id" class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.unique_id }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.username }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.email }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.branch_name }}</td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span
-                  v-if="user.roles && user.roles.length > 0"
-                  :class="getRoleBadgeClass(user.roles[0]?.name || user.role || 'user')"
+                  v-if="getUserRole(user)"
+                  :class="getRoleBadgeClass(getUserRole(user))"
                   class="px-2 py-1 text-xs font-medium rounded-full"
                 >
-                  {{ user.roles[0]?.name || user.role || 'user' }}
+                  {{ getUserRole(user) }}
                 </span>
                 <span v-else class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
                   No Role
@@ -300,7 +309,7 @@ onMounted(() => {
 
         <!-- Mobile Cards -->
         <div class="md:hidden divide-y">
-          <div v-for="user in users" :key="user.id" class="p-4">
+          <div v-for="user in users" :key="user.unique_id" class="p-4">
             <div class="flex justify-between items-start">
               <div>
                 <h3 class="font-semibold text-gray-900">{{ user.username }}</h3>
@@ -308,11 +317,11 @@ onMounted(() => {
                 <p class="text-xs text-gray-500">Cabang: {{ user.branch_name }}</p>
               </div>
               <span
-                v-if="user.roles && user.roles.length > 0"
-                :class="getRoleBadgeClass(user.roles[0]?.name || user.role || 'user')"
+                v-if="getUserRole(user)"
+                :class="getRoleBadgeClass(getUserRole(user))"
                 class="px-2 py-1 text-xs font-medium rounded-full"
               >
-                {{ user.roles[0]?.name || user.role || 'user' }}
+                {{ getUserRole(user) }}
               </span>
             </div>
             <div class="flex gap-2 mt-3">
