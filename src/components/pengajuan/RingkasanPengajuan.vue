@@ -8,17 +8,21 @@
         <span>x{{ item.jumlah }}</span>
       </li>
     </ul>
-    <button
-      class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
+    <BaseButton
+      class="mt-4"
+      variant="primary"
       @click="$emit('submit')"
       :disabled="ringkasan.length === 0"
+      fullWidth
     >
-      Ajukan Pengadaan
-    </button>
+      📋 Ajukan Pengadaan
+    </BaseButton>
   </div>
 </template>
 
 <script setup>
+import BaseButton from '@/components/BaseButton.vue';
+
 const props = defineProps({
   ringkasan: Array
 })

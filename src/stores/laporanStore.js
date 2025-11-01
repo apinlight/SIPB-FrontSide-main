@@ -35,25 +35,66 @@ export const useLaporanStore = defineStore('laporan', {
       logger.info('Store: Fetching laporan data', { filters: this.filters });
 
       try {
+        // Build params: convert period -> start_date/end_date if needed
+        const toISODate = (d) => new Date(d).toISOString().slice(0, 10);
+        let start = this.filters.startDate || undefined;
+        let end = this.filters.endDate || undefined;
+        if (!start && !end) {
+          const now = new Date();
+          if (this.filters.period === 'today') {
+            start = end = toISODate(now);
+          } else if (this.filters.period === 'week') {
+            const first = new Date(now);
+            first.setDate(now.getDate() - now.getDay()); // start of week (Sunday)
+            start = toISODate(first);
+            end = toISODate(now);
+          } else if (this.filters.period === 'month') {
+            const first = new Date(now.getFullYear(), now.getMonth(), 1);
+            const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            start = toISODate(first);
+            end = toISODate(last);
+          } else if (this.filters.period === 'year') {
+            const first = new Date(now.getFullYear(), 0, 1);
+            const last = new Date(now.getFullYear(), 11, 31);
+            start = toISODate(first);
+            end = toISODate(last);
+          } else if (this.filters.period === 'all') {
+            start = undefined;
+            end = undefined;
+          }
+        }
+
         const params = {
-          period: this.filters.period,
           branch: this.filters.branch || undefined,
-          start_date: this.filters.startDate || undefined,
-          end_date: this.filters.endDate || undefined,
+          start_date: start,
+          end_date: end,
         };
 
-        // Fetch the raw data
-        const [pengajuanRes, barangRes] = await Promise.all([
-            apiClient.get('/pengajuan', { params }),
-            apiClient.get('/barang', { params }) // Assuming barang can also be filtered
+        // Fetch reports from dedicated laporan endpoints
+        const [summaryRes, barangRes, pengajuanRes, cabangRes] = await Promise.all([
+          apiClient.get('/laporan/summary', { params }),
+          apiClient.get('/laporan/barang', { params }),
+          apiClient.get('/laporan/pengajuan', { params }),
+          // cabang endpoint may be restricted; handle error later
+          apiClient.get('/laporan/cabang', { params }).catch(err => ({ error: err })),
         ]);
 
-        const allPengajuan = pengajuanRes.data.data || [];
-        
-        // Process data - This logic is now centralized here
-        this._processData(allPengajuan, barangRes.data.data || []);
-        
-        logger.success('Store: Laporan data processed successfully');
+        // Assign state robustly: backend wraps payload as { status, data }
+        this.summary = summaryRes?.data?.data || { total_pengajuan: 0, total_disetujui: 0, total_menunggu: 0, total_nilai: 0 };
+        this.laporanBarang = barangRes?.data?.data || [];
+        const allPengajuan = pengajuanRes?.data?.data || [];
+        this.laporanPengajuan = allPengajuan;
+
+        // Cabang (optional)
+        if (!cabangRes?.error) {
+          this.laporanCabang = cabangRes?.data?.data || [];
+          this.branches = [...new Set((this.laporanCabang || []).map(c => c.branch_name).filter(Boolean))];
+        } else {
+          // Fallback: derive branches from pengajuan data
+          this.branches = [...new Set(allPengajuan.map(p => p.user?.branch_name).filter(Boolean))];
+        }
+
+        logger.success('Store: Laporan data fetched successfully');
       } catch (err) {
         this.error = 'Gagal memuat data laporan.';
         logger.error('Store: Failed to fetch laporan data', err);
@@ -66,46 +107,14 @@ export const useLaporanStore = defineStore('laporan', {
     /**
      * A private helper to perform all the client-side data aggregation.
      */
-    _processData(allPengajuan, allBarang) {
-        // 1. Build Summary
-        this.summary = {
-            total_pengajuan: allPengajuan.length,
-            total_disetujui: allPengajuan.filter(p => p.status_pengajuan === 'Disetujui').length,
-            total_menunggu: allPengajuan.filter(p => p.status_pengajuan === 'Menunggu Persetujuan').length,
-            total_nilai: allPengajuan.reduce((sum, p) => sum + (p.total_nilai || 0), 0),
-        };
-
-        // 2. Set Laporan Pengajuan
-        this.laporanPengajuan = allPengajuan;
-
-        // 3. Set Laporan Barang
-        this.laporanBarang = allBarang;
-
-        // 4. Build Branch Summary (Grouping logic)
-        const branchSummary = {};
-        allPengajuan.forEach(p => {
-            const branch = p.user?.branch_name || 'Unknown';
-            if (!branchSummary[branch]) {
-                branchSummary[branch] = {
-                    branch_name: branch, total_pengajuan: 0, total_disetujui: 0, total_menunggu: 0, total_ditolak: 0, total_nilai: 0
-                };
-            }
-            branchSummary[branch].total_pengajuan++;
-            if (p.status_pengajuan === 'Disetujui') branchSummary[branch].total_disetujui++;
-            if (p.status_pengajuan === 'Menunggu Persetujuan') branchSummary[branch].total_menunggu++;
-            if (p.status_pengajuan === 'Ditolak') branchSummary[branch].total_ditolak++;
-            branchSummary[branch].total_nilai += (p.total_nilai || 0);
-        });
-        this.laporanCabang = Object.values(branchSummary);
-
-        // 5. Extract unique branches for the filter dropdown
-        this.branches = [...new Set(allPengajuan.map(p => p.user?.branch_name).filter(Boolean))];
-    },
+  _processData() {
+    // Deprecated: server-side aggregation is used now via /laporan endpoints.
+  },
 
     /**
      * Handles exporting the report data.
      */
-    async exportLaporan(typeOrEvent = 'summary') {
+  async exportLaporan(typeOrEvent = 'summary', format = 'xlsx') {
       // Guard against Vue passing PointerEvent when no arg provided
       const allowedTypes = ['summary', 'barang', 'pengajuan', 'penggunaan', 'stok', 'all'];
       if (typeOrEvent && typeof typeOrEvent === 'object' && typeof typeOrEvent.preventDefault === 'function') {
@@ -124,14 +133,15 @@ export const useLaporanStore = defineStore('laporan', {
           end_date: this.filters.endDate || undefined,
         };
 
-        const response = await apiClient.get(`/laporan/export/${type}`, { params, responseType: 'blob' });
+        const base = format === 'docx' ? '/laporan/export-word' : '/laporan/export';
+        const response = await apiClient.get(`${base}/${type}`, { params, responseType: 'blob' });
 
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;
         // Try use filename from header if provided
         const cd = response.headers?.['content-disposition'] || response.headers?.get?.('content-disposition');
-        let filename = `laporan-${type}-${new Date().toISOString().split('T')[0]}.xlsx`;
+        let filename = `laporan-${type}-${new Date().toISOString().split('T')[0]}.${format === 'docx' ? 'docx' : 'xlsx'}`;
         if (cd && /filename=/i.test(cd)) {
           const match = cd.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
           const raw = decodeURIComponent(match?.[1] || match?.[2] || '');
@@ -145,7 +155,12 @@ export const useLaporanStore = defineStore('laporan', {
         
         toast.success('Laporan berhasil diexport.');
       } catch (err) {
-        const errorMsg = err.response?.data?.message || 'Gagal mengekspor laporan.';
+        let errorMsg = err.response?.data?.message || 'Gagal mengekspor laporan.';
+        if (err.response?.status === 403) {
+          errorMsg = 'Anda tidak memiliki izin untuk mengekspor laporan ini.';
+        } else if (err.response?.status === 501 && format === 'docx') {
+          errorMsg = 'Export Word belum diaktifkan di server. Mohon install PHPWord atau pilih format Excel.';
+        }
         logger.error('Store: Failed to export laporan', err);
         toast.error(errorMsg);
       }

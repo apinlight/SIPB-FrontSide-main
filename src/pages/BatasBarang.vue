@@ -37,7 +37,7 @@
               <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ item.barang?.nama_barang || 'N/A' }}</td>
               <td class="px-6 py-4 text-sm text-gray-600">{{ item.barang?.jenis_barang?.nama_jenis_barang || '-' }}</td>
               <td class="px-6 py-4 text-sm text-center">{{ item.batas_barang }}</td>
-              <td class="px-6 py-4 text-sm text-center">{{ item.current_stock || 0 }}</td>
+              <td class="px-6 py-4 text-sm text-center">{{ item.currentStock || 0 }}</td>
               <td class="px-6 py-4 text-center">
                 <span :class="[
                   'px-3 py-1 text-xs rounded-full font-medium',
@@ -83,7 +83,7 @@
             </div>
             <div>
               <span class="text-gray-500">Stok:</span>
-              <span class="font-medium ml-1">{{ item.current_stock || 0 }}</span>
+              <span class="font-medium ml-1">{{ item.currentStock || 0 }}</span>
             </div>
           </div>
           <div class="flex gap-2">

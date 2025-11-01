@@ -32,13 +32,25 @@
           </div>
 
       <div v-if="pagination.last_page > 1" class="flex justify-center gap-2 mt-6">
-        <button @click="changePage(pagination.current_page - 1)" :disabled="pagination.current_page === 1" class="px-3 py-1 border rounded disabled:opacity-50">
-          Sebelumnya
-        </button>
-        <span class="px-3 py-1">{{ pagination.current_page }} / {{ pagination.last_page }}</span>
-        <button @click="changePage(pagination.current_page + 1)" :disabled="pagination.current_page === pagination.last_page" class="px-3 py-1 border rounded disabled:opacity-50">
-          Berikutnya
-        </button>
+        <BaseButton 
+          size="sm" 
+          variant="secondary" 
+          @click="changePage(pagination.current_page - 1)" 
+          :disabled="pagination.current_page === 1"
+        >
+          ← Sebelumnya
+        </BaseButton>
+        <span class="px-3 py-1 text-gray-700">
+          {{ pagination.current_page }} / {{ pagination.last_page }}
+        </span>
+        <BaseButton 
+          size="sm" 
+          variant="secondary" 
+          @click="changePage(pagination.current_page + 1)" 
+          :disabled="pagination.current_page === pagination.last_page"
+        >
+          Berikutnya →
+        </BaseButton>
       </div>
 
       <div v-if="selectedPengajuan" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click="closeDetail">
@@ -56,6 +68,7 @@ import { formatDate, formatCurrency, getStatusClass } from '@/utils/formatters';
 import { useRiwayatCabangStore } from '@/stores/riwayatCabangStore';
 import apiClient from '@/lib/api'; // Only needed for the detail view
 import { toast } from 'vue3-toastify';
+import BaseButton from '@/components/BaseButton.vue';
 
 const userStore = useUserStore();
 const store = useRiwayatCabangStore();

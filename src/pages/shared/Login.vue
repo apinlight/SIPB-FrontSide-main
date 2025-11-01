@@ -31,13 +31,14 @@
 
         <p v-if="errorMsg" class="mb-4 text-center text-sm text-red-600">{{ errorMsg }}</p>
 
-        <button 
+        <BaseButton 
           type="submit" 
-          :disabled="loading"
-          class="flex w-full justify-center rounded-md border border-transparent bg-green-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
+          variant="primary" 
+          :loading="loading" 
+          fullWidth
         >
-          {{ loading ? 'Signing in...' : 'Sign In' }}
-        </button>
+          Sign In
+        </BaseButton>
 
       </form>
       <div class="mt-4 text-center text-sm">
@@ -53,6 +54,7 @@
 import { reactive, ref } from 'vue';
 import { useUserStore } from '@/stores/userStore'; // ✅ Only import the store
 import { logger } from '@/lib/logger';
+import BaseButton from '@/components/BaseButton.vue';
 
 // ✅ The router is no longer needed here, as the store handles redirection.
 const userStore = useUserStore();

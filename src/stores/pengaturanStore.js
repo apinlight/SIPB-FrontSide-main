@@ -24,11 +24,17 @@ export const usePengaturanStore = defineStore('pengaturan', {
       return state.batasBarangList.map(item => {
         const currentStock = stockCache[item.id_barang] || 0;
         const batas = item.batas_barang;
-        let status = 'Normal';
-        if (currentStock <= batas) status = 'Peringatan';
-        if (currentStock <= batas * 0.5) status = 'Kritis';
-        if (currentStock === 0) status = 'Habis';
-        return { ...item, currentStock, status };
+        // Align status labels with UI expectations: 'Aman', 'Menipis', 'Kritis', 'Habis'
+        let status = 'Aman';
+        if (currentStock === 0) {
+          status = 'Habis';
+        } else if (currentStock <= batas * 0.5) {
+          status = 'Kritis';
+        } else if (currentStock <= batas) {
+          status = 'Menipis';
+        }
+        // Provide both camelCase and snake_case for compatibility with existing templates
+        return { ...item, currentStock, current_stock: currentStock, status };
       });
     },
   },
@@ -86,7 +92,18 @@ export const usePengaturanStore = defineStore('pengaturan', {
                 apiClient.get('/global-settings/monthly-limit'),
                 apiClient.get('/laporan/summary') // Assuming an endpoint for stats exists
             ]);
-            this.monthlyLimit = limitRes.data.monthly_limit || 0;
+      // Be resilient to different API response shapes
+      // Possible shapes:
+      // - { data: { monthly_limit: 10 } }
+      // - { data: 10 }
+      // - { monthly_limit: 10 }
+      const lr = limitRes?.data ?? {};
+      const fromDataObj = lr?.data && typeof lr.data === 'object' && lr.data.monthly_limit != null ? lr.data.monthly_limit : null;
+      const fromDataPrimitive = lr?.data && typeof lr.data !== 'object' ? lr.data : null;
+      const fromRoot = lr?.monthly_limit != null ? lr.monthly_limit : null;
+      this.monthlyLimit = Number(
+        fromDataObj ?? fromDataPrimitive ?? fromRoot ?? 0
+      ) || 0;
             this.pengajuanStats = statsRes.data.data;
         } catch(e) {
             toast.error('Gagal memuat data batas pengajuan.');

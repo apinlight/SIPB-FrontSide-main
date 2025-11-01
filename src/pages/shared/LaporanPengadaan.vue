@@ -79,11 +79,11 @@
                   <tbody>
                     <tr v-for="item in laporanBarang" :key="item.id_barang" class="border-b hover:bg-gray-50">
                       <td class="border px-4 py-3">{{ item.nama_barang }}</td>
-                      <td class="border px-4 py-3 text-center">{{ item.stok_saat_ini || 0 }}</td>
+                      <td class="border px-4 py-3 text-center">{{ item.stok_saat_ini ?? 0 }}</td>
                       <td class="border px-4 py-3 text-right">Rp {{ formatCurrency(item.nilai_pengadaan || 0) }}</td>
                       <td class="border px-4 py-3 text-center">
-                        <span :class="getStockBadgeClass(item.stok_saat_ini)">
-                          {{ getStockStatus(item.stok_saat_ini, item.batas_minimum) }}
+                        <span :class="getStockBadgeClass(item.stok_saat_ini ?? 0)">
+                          {{ getStockStatus(item.stok_saat_ini ?? 0, item.batas_minimum ?? 5) }}
                         </span>
                       </td>
                     </tr>
@@ -93,18 +93,85 @@
             </div>
 
             <div v-if="activeTab === 'pengajuan'">
+              <div class="overflow-x-auto">
+                <table class="w-full table-auto border-collapse border">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="border px-4 py-3 text-left">Pemohon</th>
+                      <th class="border px-4 py-3 text-left">Cabang</th>
+                      <th class="border px-4 py-3 text-center">Total Item</th>
+                      <th class="border px-4 py-3 text-right">Total Nilai</th>
+                      <th class="border px-4 py-3 text-center">Status</th>
+                      <th class="border px-4 py-3 text-left">Tanggal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="p in laporanPengajuan" :key="p.id_pengajuan" class="border-b hover:bg-gray-50">
+                      <td class="border px-4 py-3">{{ p.user?.name || '-' }}</td>
+                      <td class="border px-4 py-3">{{ p.user?.branch_name || '-' }}</td>
+                      <td class="border px-4 py-3 text-center">{{ p.total_items ?? 0 }}</td>
+                      <td class="border px-4 py-3 text-right">Rp {{ formatCurrency(p.total_nilai ?? 0) }}</td>
+                      <td class="border px-4 py-3 text-center">
+                        <span :class="getStatusClass(p.status_pengajuan)">{{ p.status_pengajuan }}</span>
+                      </td>
+                      <td class="border px-4 py-3">{{ formatDate(p.created_at) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
+            </div>
 
             <div v-if="activeTab === 'cabang'">
+              <div class="overflow-x-auto">
+                <table class="w-full table-auto border-collapse border">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="border px-4 py-3 text-left">Cabang</th>
+                      <th class="border px-4 py-3 text-center">Total Pengajuan</th>
+                      <th class="border px-4 py-3 text-center">Disetujui</th>
+                      <th class="border px-4 py-3 text-center">Menunggu</th>
+                      <th class="border px-4 py-3 text-right">Total Nilai</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="c in laporanCabang" :key="c.branch_name" class="border-b hover:bg-gray-50">
+                      <td class="border px-4 py-3">{{ c.branch_name || '-' }}</td>
+                      <td class="border px-4 py-3 text-center">{{ c.total_pengajuan ?? 0 }}</td>
+                      <td class="border px-4 py-3 text-center">{{ c.total_disetujui ?? 0 }}</td>
+                      <td class="border px-4 py-3 text-center">{{ c.total_menunggu ?? 0 }}</td>
+                      <td class="border px-4 py-3 text-right">Rp {{ formatCurrency(c.total_nilai ?? 0) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="mt-6 flex justify-end">
-        <button @click="() => exportLaporan('summary')" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700" :disabled="loading">
+      <div class="mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 justify-end">
+        <div class="flex items-center gap-2">
+          <label for="exportType" class="text-sm text-gray-600">Jenis Export</label>
+          <select id="exportType" v-model="exportType" class="border rounded px-3 py-2 text-sm">
+            <option value="summary">Summary</option>
+            <option value="barang">Barang</option>
+            <option value="pengajuan">Pengajuan</option>
+            <option v-if="userStore.isAdmin || userStore.isManager" value="penggunaan">Penggunaan</option>
+            <option v-if="userStore.isAdmin || userStore.isManager" value="stok">Stok</option>
+            <option v-if="userStore.isAdmin || userStore.isManager" value="all">Semua</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <label for="exportFormat" class="text-sm text-gray-600">Format</label>
+          <select id="exportFormat" v-model="exportFormat" class="border rounded px-3 py-2 text-sm">
+            <option value="xlsx">Excel (.xlsx)</option>
+            <option value="docx">Word (.docx)</option>
+          </select>
+        </div>
+        <button @click="handleExport" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:opacity-60" :disabled="loading">
           📊 Export Excel
         </button>
+        <p v-if="!userStore.isAdmin && !userStore.isManager" class="text-xs text-gray-500">Catatan: Export memerlukan peran admin atau manager.</p>
       </div>
     </div>
   </DefaultLayout>
@@ -115,6 +182,7 @@ import { ref, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import { useLaporanStore } from '@/stores/laporanStore';
+import { useUserStore } from '@/stores/userStore';
 // ✅ Import the correct, standardized function names
 import { 
   formatDate, 
@@ -131,6 +199,7 @@ const {
   branches, loading 
 } = storeToRefs(laporanStore);
 const { fetchLaporanData, exportLaporan } = laporanStore;
+const userStore = useUserStore();
 
 // --- LOCAL UI STATE ---
 const activeTab = ref('barang');
@@ -144,4 +213,8 @@ const tabs = [
 onMounted(() => {
   fetchLaporanData();
 });
+
+const exportType = ref('summary');
+const exportFormat = ref('xlsx');
+const handleExport = () => exportLaporan(exportType.value, exportFormat.value);
 </script>
