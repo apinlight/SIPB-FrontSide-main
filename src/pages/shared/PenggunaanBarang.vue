@@ -12,8 +12,9 @@
             <span class="px-3 py-1 text-sm rounded-full" :class="getRoleBadgeClass()">
               {{ getRoleText() }}
             </span>
+            <!-- ✅ FIX: Manager tidak boleh create penggunaan barang (read-only) -->
             <BaseButton 
-              v-if="!showForm" 
+              v-if="!showForm && !userStore.isManager" 
               variant="primary" 
               @click="showForm = true"
             >
@@ -39,12 +40,8 @@
         :loading="penggunaanBarangStore.loading"
         :pagination="penggunaanBarangStore.pagination"
         :show-user="userStore.isAdmin || userStore.isManager"
-        :readonly="false"
         @edit="handleEdit"
-        @approve="handleApprove"
-        @reject="handleReject"
         @change-page="handlePageChange"
-        @saved="handleTableAction"
         ref="tableRef"
       />
     </div>
@@ -74,7 +71,7 @@ const getPageDescription = () => {
   if (userStore.isAdmin) {
     return 'Kelola semua penggunaan barang di seluruh cabang'
   } else if (userStore.isManager) {
-    return 'Kelola penggunaan barang di cabang Anda'
+    return 'Monitoring penggunaan barang di seluruh cabang (read-only)'
   } else {
     return 'Catat dan pantau penggunaan barang Anda'
   }
@@ -111,50 +108,6 @@ const handleFormCancel = () => {
 const handleEdit = (penggunaan) => {
   editingPenggunaan.value = penggunaan
   showForm.value = true
-}
-
-const handleApprove = async (penggunaan) => {
-  if (!confirm(`Yakin ingin menyetujui penggunaan barang "${penggunaan.barang?.nama_barang}"?`)) {
-    return
-  }
-
-  try {
-    logger.debug('Approving penggunaan barang:', penggunaan.id_penggunaan)
-    await API.post(`/penggunaan-barang/${penggunaan.id_penggunaan}/approve`)
-    // Backend returns a Resource on success; if we reach here, it's successful
-    toast.success('Penggunaan barang berhasil disetujui')
-    await penggunaanBarangStore.fetchPenggunaanBarang()
-  } catch (err) {
-    logger.error('Failed to approve penggunaan barang:', err.response?.data?.message || err.message)
-    const msg = err.response?.data?.message || 'Gagal menyetujui penggunaan barang'
-    toast.error(msg)
-  }
-}
-
-const handleReject = async (penggunaan) => {
-  if (!confirm(`Yakin ingin menolak penggunaan barang "${penggunaan.barang?.nama_barang}"?`)) {
-    return
-  }
-
-  try {
-    logger.debug('Rejecting penggunaan barang:', penggunaan.id_penggunaan)
-    await API.post(`/penggunaan-barang/${penggunaan.id_penggunaan}/reject`)
-    // Backend returns a Resource on success; if we reach here, it's successful
-    toast.success('Penggunaan barang berhasil ditolak')
-    await penggunaanBarangStore.fetchPenggunaanBarang()
-  } catch (err) {
-    logger.error('Failed to reject penggunaan barang:', err.response?.data?.message || err.message)
-    const msg = err.response?.data?.message || 'Gagal menolak penggunaan barang'
-    toast.error(msg)
-  }
-}
-
-const handleTableAction = (result) => {
-  if (result.success) {
-    toast.success(result.message)
-  } else {
-    toast.error(result.message)
-  }
 }
 
 const handlePageChange = (page) => {
