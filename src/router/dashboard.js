@@ -34,7 +34,7 @@ export const dashboardRoutes = [
     component: () => import('@/pages/shared/LaporanPengadaan.vue'),
     meta: {
       requiresAuth: true,
-      roles: ['admin', 'manager'], // ✅ Standardized to 'roles'
+      roles: ['admin', 'manager', 'user'], // ✅ FIX: user dapat lihat dan ekspor laporan miliknya
       title: 'Laporan Pengadaan'
     }
   },

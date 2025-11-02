@@ -83,17 +83,54 @@ export const usePenggunaanBarangStore = defineStore('penggunaanBarang', {
       }
     },
 
+    async savePenggunaan(data) {
+      // ✅ NEW: Unified create/update method
+      this.loading = true
+      this.error = null
+      
+      try {
+        const isUpdate = !!data.id_penggunaan
+        const endpoint = isUpdate 
+          ? `/penggunaan-barang/${data.id_penggunaan}` 
+          : '/penggunaan-barang'
+        const method = isUpdate ? 'put' : 'post'
+        
+        logger.debug(`${isUpdate ? 'Updating' : 'Creating'} penggunaan barang:`, data)
+        const response = await API[method](endpoint, data)
+        
+        const saved = response.data?.data || response.data
+        
+        if (isUpdate) {
+          const index = this.penggunaanList.findIndex(p => p.id_penggunaan === saved.id_penggunaan)
+          if (index !== -1) {
+            this.penggunaanList[index] = saved
+          }
+        } else {
+          this.penggunaanList.unshift(saved)
+        }
+        
+        logger.success(`Penggunaan barang ${isUpdate ? 'updated' : 'created'} successfully`)
+        return saved
+      } catch (err) {
+        this.error = err.response?.data?.message || `Failed to ${data.id_penggunaan ? 'update' : 'create'} penggunaan barang`
+        logger.error('Failed to save penggunaan barang:', err)
+        throw err
+      } finally {
+        this.loading = false
+      }
+    },
+
     async fetchAvailableStock(idBarang = null) {
       this.loading = true
       this.error = null
       
       try {
-        const params = idBarang ? { id_barang: idBarang } : {}
-        const response = await API.get('/stok-tersedia', { params })
+        // ✅ FIX: Endpoint path corrected to match backend routes
+        const endpoint = idBarang ? `/stok/tersedia/${idBarang}` : '/stok/tersedia'
+        const response = await API.get(endpoint)
         
-        // If backend returns Resource: use response.data.data
-        // If backend returns custom JSON with status: fallback still works by reading .data
-        this.availableStock = response.data?.data || []
+        // Backend returns plain JSON array for stock
+        this.availableStock = response.data || []
         logger.success('Available stock loaded successfully')
         return this.availableStock
       } catch (err) {

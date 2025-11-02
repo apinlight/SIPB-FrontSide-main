@@ -19,7 +19,7 @@ const routes = [
     path: '/admin/persetujuan',
     name: 'PersetujuanPengadaan',
     component: () => import('@/pages/admin/PersetujuanPengadaan.vue'),
-     meta: { requiresAuth: true, roles: ['admin', 'manager'], title: 'Persetujuan Pengadaan' }
+     meta: { requiresAuth: true, roles: ['admin'], title: 'Persetujuan Pengadaan' } // ✅ FIX: hanya admin yang approve
   },
   // ✅ ADDED MISSING ADMIN ROUTES
   {
@@ -58,7 +58,7 @@ const routes = [
     path: '/user/pengajuan',
     name: 'PengajuanBarang',
     component: () => import('@/pages/user/PengajuanBarang.vue'),
-    meta: { requiresAuth: true, roles: ['user', 'admin'], title: 'Pengajuan Barang' }
+    meta: { requiresAuth: true, roles: ['user', 'admin'], title: 'Pengajuan Barang' } // ✅ FIX: manager tidak ajukan
   },
   {
     path: '/users',
