@@ -139,9 +139,12 @@ const handleEdit = (item) => {
   logger.info('Editing barang', { id_barang: item.id_barang, nama_barang: item.nama_barang })
   editingItem.value = {
     id_barang: item.id_barang,
-    id_jenis_barang: item.id_jenis_barang,
+    id_jenis_barang: item.id_jenis_barang || item.jenis_barang?.id_jenis_barang,
     nama_barang: item.nama_barang,
     harga_barang: item.harga_barang,
+    satuan: item.satuan || '',
+    deskripsi: item.deskripsi || '',
+    batas_minimum: item.batas_minimum ?? 5,
   }
   editMode.value = true
   showForm.value = true
