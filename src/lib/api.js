@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { getActivePinia } from 'pinia';
-import { useUserStore } from '@/stores/userStore';
 import { logger } from './logger';
 
 // Create a new Axios instance with the FULL base URL, including /api/v1.
@@ -15,12 +14,14 @@ const apiClient = axios.create({
 
 // Request interceptor: Get the token from the Pinia store.
 apiClient.interceptors.request.use(
-    (config) => {
+    async (config) => {
         logger.api.request(config.method, config.url);
         let token = null;
         const activePinia = getActivePinia();
         if (activePinia) {
-            const userStore = useUserStore();
+            // Lazy-load the user store to allow better code-splitting of stores
+            const module = await import('@/stores/userStore');
+            const userStore = module.useUserStore();
             token = userStore.token;
         } else {
             // Fallback to localStorage if Pinia hasn't been activated yet
@@ -57,7 +58,8 @@ apiClient.interceptors.response.use(
             logger.auth.tokenExpired();
             const activePinia = getActivePinia();
             if (activePinia) {
-                const userStore = useUserStore();
+                const module = await import('@/stores/userStore');
+                const userStore = module.useUserStore();
                 userStore.logout();
             } else {
                 // Fallback: clear tokens and reload to login

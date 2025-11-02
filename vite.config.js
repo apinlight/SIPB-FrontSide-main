@@ -28,9 +28,11 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['vue', 'vue-router', 'pinia'],
-          api: ['axios']
+        // Better control over chunk splitting to avoid duplication and reduce initial payload
+        manualChunks(id) {
+          if (id.includes('node_modules')) return 'vendor'
+          if (id.includes('/src/stores/')) return 'stores'
+          if (id.includes('/src/utils/') || id.includes('/src/lib/')) return 'utils'
         }
       }
     }
