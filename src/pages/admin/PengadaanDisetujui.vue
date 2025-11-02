@@ -67,16 +67,6 @@
               <BaseButton size="sm" variant="secondary" @click="showDetail(pengajuan)" fullWidth>
                 Lihat Detail
               </BaseButton>
-              <BaseButton
-                size="sm"
-                :variant="pengajuan.status_pengajuan === 'Selesai' ? 'secondary' : 'primary'"
-                @click="handleTambahKeGudang(pengajuan)"
-                :disabled="processing || pengajuan.status_pengajuan === 'Selesai'"
-                :loading="processing && pengajuan.status_pengajuan !== 'Selesai'"
-                fullWidth
-              >
-                {{ pengajuan.status_pengajuan === 'Selesai' ? 'Sudah di Gudang' : 'Tambah ke Gudang' }}
-              </BaseButton>
             </div>
           </div>
         </div>
@@ -129,7 +119,7 @@ import BaseButton from '@/components/BaseButton.vue';
 const selectedPengajuan = ref(null);
 
 const store = usePengadaanAdminStore();
-const { itemList: pengajuanList, pagination, filters, loading, processing } = storeToRefs(store);
+const { itemList: pengajuanList, pagination, filters, loading } = storeToRefs(store);
 
 const uniqueBranches = computed(() => {
     const branches = pengajuanList.value.map(p => p.user?.branch_name).filter(Boolean);
@@ -149,12 +139,6 @@ const changePage = (page) => {
     store.fetchItems({ status: 'Disetujui', page });
   }
 }
-
-const handleTambahKeGudang = (pengajuan) => {
-  if (confirm(`Tambah semua barang dari pengajuan ${pengajuan.id_pengajuan} ke gudang? This will mark the request as 'Selesai'.`)) {
-    store.processToGudang(pengajuan);
-  }
-};
 
 const showDetail = (pengajuan) => {
   selectedPengajuan.value = pengajuan;
