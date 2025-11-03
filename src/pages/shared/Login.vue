@@ -2,7 +2,7 @@
 <template>
   <div class="flex min-h-screen items-center justify-center bg-gray-50 p-4">
     <div class="w-full max-w-sm rounded-lg bg-white p-6 shadow-md">
-      <h2 class="mb-6 text-center text-2xl font-bold text-gray-800">Login to SIPB</h2>
+  <h2 class="mb-6 text-center text-2xl font-bold text-gray-800">Login to SIMBA</h2>
       
       <form @submit.prevent="handleLogin">
         <div class="mb-4">
@@ -72,6 +72,31 @@ const credentials = reactive({
 /**
  * The login method is now incredibly simple. It delegates all work to the store.
  */
+function extractErrorMessage(error) {
+  // Prefer backend-provided message
+  const backendMsg = error?.response?.data?.message;
+  if (backendMsg && typeof backendMsg === 'string') return backendMsg;
+
+  // Aggregate validation errors if present (Laravel 422 format)
+  const errors = error?.response?.data?.errors;
+  if (errors && typeof errors === 'object') {
+    const messages = Object.values(errors)
+      .flat()
+      .filter(Boolean)
+      .slice(0, 3); // show up to 3 messages
+    if (messages.length) return messages.join('\n');
+  }
+
+  // HTTP status-based fallback
+  const status = error?.response?.status;
+  if (status === 401) return 'Kredensial salah. Periksa username/email dan password.';
+  if (status === 429) return 'Terlalu banyak percobaan. Coba lagi beberapa saat.';
+  if (status >= 500) return 'Terjadi kesalahan pada server. Coba lagi nanti.';
+
+  // Generic fallback
+  return error?.message || 'Gagal login. Silakan coba lagi.';
+}
+
 async function handleLogin() {
   loading.value = true;
   errorMsg.value = '';
@@ -88,8 +113,8 @@ async function handleLogin() {
   } catch (error) {
     // The store's login action re-throws the error so we can catch it here.
     // The component's ONLY job is to display the error message.
-    errorMsg.value = error.response?.data?.message || 'Invalid username or password.';
-    logger.error('Login failed in component', { error: errorMsg.value });
+    errorMsg.value = extractErrorMessage(error);
+    logger.error('Login failed in component', { error: errorMsg.value, status: error?.response?.status });
   } finally {
     loading.value = false;
   }

@@ -3,7 +3,7 @@
     <div class="p-4 sm:p-6 space-y-6">
       <div class="bg-white p-6 rounded-xl shadow">
         <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">📊 Dashboard</h1>
-        <p class="text-gray-600 mt-1">Selamat datang di Sistem Informasi dan Pencatatan Barang</p>
+  <p class="text-gray-600 mt-1">Selamat datang di Sistem Informasi dan Manajemen Barang</p>
       </div>
       
       <div v-if="userStore?.user">

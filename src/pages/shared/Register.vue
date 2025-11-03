@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-100 flex items-center justify-center">
     <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-      <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Register SIPB</h1>
+  <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Register SIMBA</h1>
       
       <form @submit.prevent="handleRegister" class="space-y-4">
         <div>
