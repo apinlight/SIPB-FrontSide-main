@@ -130,9 +130,9 @@ const handleSubmit = async () => {
   if (!isFormValid.value) return;
   
   // Use the unified save action for both create and edit
-  const success = await store.savePenggunaan(form.value);
-  if (success) {
-    emit('saved');
+  const result = await store.savePenggunaan(form.value);
+  if (result.success) {
+    emit('saved', result.data);
   }
 };
 </script>

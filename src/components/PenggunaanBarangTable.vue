@@ -63,7 +63,7 @@
             <h3 class="font-semibold text-gray-900 text-base">{{ item.barang?.nama_barang }}</h3>
             <p class="text-xs text-gray-500 mt-1">{{ formatDate(item.tanggal_penggunaan) }}</p>
           </div>
-          <span :class="getStatusBadgeClass(item.status)">{{ getStatusText(item.status) }}</span>
+          <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">{{ item.status }}</span>
         </div>
         <div class="grid grid-cols-2 gap-3 text-sm">
           <div>

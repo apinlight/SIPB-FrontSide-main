@@ -98,6 +98,7 @@ export const usePenggunaanBarangStore = defineStore('penggunaanBarang', {
         logger.debug(`${isUpdate ? 'Updating' : 'Creating'} penggunaan barang:`, data)
         const response = await API[method](endpoint, data)
         
+        // ✅ FIX: Handle Laravel Resource response format
         const saved = response.data?.data || response.data
         
         if (isUpdate) {
@@ -110,11 +111,11 @@ export const usePenggunaanBarangStore = defineStore('penggunaanBarang', {
         }
         
         logger.success(`Penggunaan barang ${isUpdate ? 'updated' : 'created'} successfully`)
-        return saved
+        return { success: true, data: saved }
       } catch (err) {
         this.error = err.response?.data?.message || `Failed to ${data.id_penggunaan ? 'update' : 'create'} penggunaan barang`
         logger.error('Failed to save penggunaan barang:', err)
-        throw err
+        return { success: false, error: this.error }
       } finally {
         this.loading = false
       }
@@ -129,8 +130,8 @@ export const usePenggunaanBarangStore = defineStore('penggunaanBarang', {
         const endpoint = idBarang ? `/stok/tersedia/${idBarang}` : '/stok/tersedia'
         const response = await API.get(endpoint)
         
-        // Backend returns plain JSON array for stock
-        this.availableStock = response.data || []
+        // ✅ FIX: Backend returns { status, data } format
+        this.availableStock = response.data?.data || response.data || []
         logger.success('Available stock loaded successfully')
         return this.availableStock
       } catch (err) {

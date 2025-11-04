@@ -73,11 +73,7 @@ const credentials = reactive({
  * The login method is now incredibly simple. It delegates all work to the store.
  */
 function extractErrorMessage(error) {
-  // Prefer backend-provided message
-  const backendMsg = error?.response?.data?.message;
-  if (backendMsg && typeof backendMsg === 'string') return backendMsg;
-
-  // Aggregate validation errors if present (Laravel 422 format)
+  // 1) Prefer detailed validation messages if present (Laravel 422 format)
   const errors = error?.response?.data?.errors;
   if (errors && typeof errors === 'object') {
     const messages = Object.values(errors)
@@ -87,13 +83,17 @@ function extractErrorMessage(error) {
     if (messages.length) return messages.join('\n');
   }
 
-  // HTTP status-based fallback
+  // 2) Otherwise, use backend-provided message if it's meaningful
+  const backendMsg = error?.response?.data?.message;
+  if (backendMsg && typeof backendMsg === 'string') return backendMsg;
+
+  // 3) HTTP status-based fallback
   const status = error?.response?.status;
   if (status === 401) return 'Kredensial salah. Periksa username/email dan password.';
   if (status === 429) return 'Terlalu banyak percobaan. Coba lagi beberapa saat.';
   if (status >= 500) return 'Terjadi kesalahan pada server. Coba lagi nanti.';
 
-  // Generic fallback
+  // 4) Generic fallback
   return error?.message || 'Gagal login. Silakan coba lagi.';
 }
 
