@@ -44,6 +44,7 @@ export const useStokStore = defineStore('stok', {
       try {
         const response = await apiClient.get('/stok-tersedia');
         this.stockList = response.data.data;
+        logger.info('Available stock loaded:', this.stockList); // ✅ Debug: Log actual data
         logger.success('Available stock loaded successfully');
       } catch (err) {
         this.error = err.response?.data?.message || 'Failed to fetch available stock';

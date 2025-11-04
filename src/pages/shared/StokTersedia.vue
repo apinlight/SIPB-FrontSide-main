@@ -50,13 +50,13 @@
                 </td>
               </tr>
               <tr v-else v-for="item in filteredStock" :key="item.id_barang" class="hover:bg-gray-50">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ item.id_barang }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">{{ item.nama_barang }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.jenis_barang }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">{{ item.jumlah_tersedia }} unit</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ item.id_barang || '-' }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">{{ item.nama_barang || 'Unknown' }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.jenis_barang || 'N/A' }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">{{ item.jumlah_tersedia ?? 0 }} unit</td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span :class="getStockBadgeClass(item.jumlah_tersedia)">
-                    {{ getStockStatus(item.jumlah_tersedia) }}
+                  <span :class="getStockBadgeClass(item.jumlah_tersedia ?? 0)">
+                    {{ getStockStatus(item.jumlah_tersedia ?? 0, 5) }}
                   </span>
                 </td>
               </tr>
@@ -75,16 +75,16 @@
           <div v-else v-for="item in filteredStock" :key="item.id_barang" class="p-4">
             <div class="flex justify-between items-start mb-2">
               <div>
-                <h3 class="font-semibold text-gray-900">{{ item.nama_barang }}</h3>
-                <p class="text-xs text-gray-500">Kode: {{ item.id_barang }}</p>
-                <p class="text-xs text-gray-500">Jenis: {{ item.jenis_barang }}</p>
+                <h3 class="font-semibold text-gray-900">{{ item.nama_barang || 'Unknown' }}</h3>
+                <p class="text-xs text-gray-500">Kode: {{ item.id_barang || '-' }}</p>
+                <p class="text-xs text-gray-500">Jenis: {{ item.jenis_barang || 'N/A' }}</p>
               </div>
-              <span :class="getStockBadgeClass(item.jumlah_tersedia)">
-                {{ getStockStatus(item.jumlah_tersedia) }}
+              <span :class="getStockBadgeClass(item.jumlah_tersedia ?? 0)">
+                {{ getStockStatus(item.jumlah_tersedia ?? 0, 5) }}
               </span>
             </div>
             <div class="mt-2">
-              <span class="text-sm font-medium">Stok: {{ item.jumlah_tersedia }} unit</span>
+              <span class="text-sm font-medium">Stok: {{ item.jumlah_tersedia ?? 0 }} unit</span>
             </div>
           </div>
         </div>
