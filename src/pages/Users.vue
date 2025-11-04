@@ -55,6 +55,7 @@ const handleSubmit = async () => {
   const success = await saveUser(form.value);
   if (success) {
     resetForm();
+    showForm.value = false; // Close form after successful save
   }
 };
 
@@ -100,10 +101,11 @@ const changePage = (page) => {
 const resetForm = () => {
   logger.debug('Resetting user form');
   form.value = {
-    unique_id: '', username: '', email: '', password: '', branch_name: '', role: ''
+    unique_id: '', username: '', email: '', password: '', password_confirmation: '', branch_name: '', role: ''
   };
   editMode.value = false;
-  showForm.value = false;
+  // ✅ FIX: Don't auto-hide form when resetting - let the caller decide
+  // showForm.value = false; 
 };
 
 const getRoleBadgeClass = (roleName) => {
@@ -204,6 +206,19 @@ onMounted(() => {
               </p>
             </div>
             <div>
+              <label class="block text-sm font-medium mb-2">Konfirmasi Password</label>
+              <input
+                v-model="form.password_confirmation"
+                type="password"
+                class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="Ulangi password"
+                :required="!editMode && !!form.password"
+              />
+              <p v-if="editMode" class="text-xs text-gray-500 mt-1">
+                Wajib diisi jika mengubah password
+              </p>
+            </div>
+            <div>
               <label class="block text-sm font-medium mb-2">Nama Cabang</label>
               <input
                 v-model="form.branch_name"
@@ -232,7 +247,7 @@ onMounted(() => {
             <BaseButton type="submit" variant="primary" :disabled="loading" :loading="loading" fullWidth>
               {{ editMode ? 'Update' : 'Simpan' }}
             </BaseButton>
-            <BaseButton type="button" variant="secondary" @click="resetForm" fullWidth>
+            <BaseButton type="button" variant="secondary" @click="resetForm(); showForm = false" fullWidth>
               Batal
             </BaseButton>
           </div>

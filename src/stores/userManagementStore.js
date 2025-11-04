@@ -70,8 +70,16 @@ export const useUserManagementStore = defineStore('userManagement', {
 
       try {
         const payload = { ...userData };
+        
+        // ✅ Convert role string to roles array (backend expects array)
+        if (payload.role) {
+          payload.roles = [payload.role];
+          delete payload.role;
+        }
+        
         if (isEditing && !payload.password) {
           delete payload.password; // Don't send empty password on update
+          delete payload.password_confirmation; // Also remove confirmation
         }
 
         let response;
