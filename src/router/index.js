@@ -73,6 +73,14 @@ const routes = [
     meta: { requiresAuth: true, roles: ['manager'], title: 'Riwayat Cabang' }
   },
   
+  // --- Shared Routes (All Authenticated Users) ---
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('@/pages/shared/Profile.vue'),
+    meta: { requiresAuth: true, title: 'Profil Saya' }
+  },
+  
   // --- 404 Fallback ---
   {
     path: '/:pathMatch(.*)*',

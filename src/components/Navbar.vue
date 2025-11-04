@@ -18,37 +18,12 @@
         </h1>
       </div>
 
-      <!-- Right section: User info + Logout -->
-      <div class="flex items-center gap-2 sm:gap-4">
-        <!-- User greeting - hide branch on small screens -->
-        <div class="hidden sm:flex flex-col items-end text-sm">
-          <span class="font-medium text-gray-800">{{ userStore.user?.username }}</span>
-          <span class="text-xs text-gray-500">{{ userStore.user?.branch_name }}</span>
-        </div>
-        <!-- Mobile: show only username -->
-        <span class="sm:hidden text-sm font-medium text-gray-800 max-w-[100px] truncate">
-          {{ userStore.user?.username }}
-        </span>
-        
-        <!-- Logout button - icon on mobile, text on desktop -->
-        <button 
-          @click="userStore.logout()" 
-          class="bg-red-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg hover:bg-red-700 active:bg-red-800 transition-colors shadow-sm flex items-center gap-2 touch-manipulation min-h-[44px]"
-          aria-label="Logout"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          <span class="hidden sm:inline font-medium">Logout</span>
-        </button>
-      </div>
+      <!-- Right section: User Dropdown -->
+      <UserDropdown />
     </div>
   </nav>
 </template>
 
 <script setup>
-import { useUserStore } from '@/stores/userStore';
-
-// The Navbar's only job is to use the store. No router or API needed here.
-const userStore = useUserStore();
+import UserDropdown from '@/components/UserDropdown.vue';
 </script>

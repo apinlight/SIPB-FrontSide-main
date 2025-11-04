@@ -81,5 +81,24 @@ export const useUserStore = defineStore('user', {
             localStorage.removeItem('auth_user');
             localStorage.removeItem('auth_token');
         },
+
+        async updateProfile(profileData) {
+            try {
+                logger.info('Updating user profile...', { username: profileData.username });
+                const response = await apiClient.put('/profile', profileData);
+                
+                // Update local user data
+                const updatedUser = response.data.data;
+                this.user = updatedUser;
+                localStorage.setItem('auth_user', JSON.stringify(updatedUser));
+                
+                logger.info('Profile updated successfully');
+                return { success: true, data: updatedUser };
+            } catch (error) {
+                logger.error('Failed to update profile:', error);
+                const errorMsg = error.response?.data?.message || 'Gagal memperbarui profil';
+                return { success: false, error: errorMsg };
+            }
+        }
     }
 });
