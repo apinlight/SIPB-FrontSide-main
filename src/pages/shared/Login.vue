@@ -41,11 +41,6 @@
         </BaseButton>
 
       </form>
-      <div class="mt-4 text-center text-sm">
-        <router-link to="/register" class="font-medium text-green-600 hover:text-green-500">
-          Don't have an account? Register
-        </router-link>
-      </div>
     </div>
   </div>
 </template>

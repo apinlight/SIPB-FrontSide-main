@@ -2,8 +2,18 @@
   <div class="p-4 sm:p-6 max-w-4xl mx-auto">
     <!-- Header -->
     <div class="mb-6">
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Profil Saya</h1>
-      <p class="text-sm text-gray-600 mt-1">Kelola informasi profil dan keamanan akun Anda</p>
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Profil Saya</h1>
+          <p class="text-sm text-gray-600 mt-1">Kelola informasi profil dan keamanan akun Anda</p>
+        </div>
+        <BaseButton variant="secondary" @click="router.back()">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Kembali
+        </BaseButton>
+      </div>
     </div>
 
     <!-- Profile Card -->
@@ -66,17 +76,16 @@
               />
             </div>
 
-            <!-- Branch Name -->
+            <!-- Cabang (read-only) -->
             <div class="md:col-span-2">
               <label class="block text-sm font-medium text-gray-700 mb-2">
-                Nama Cabang <span class="text-red-500">*</span>
+                Cabang
               </label>
               <input
-                v-model="form.branch_name"
+                :value="userStore.user?.cabang?.nama_cabang || '-'"
                 type="text"
-                required
-                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                placeholder="Nama Cabang Anda"
+                disabled
+                class="w-full border border-gray-200 bg-gray-50 text-gray-600 rounded-lg px-4 py-2"
               />
             </div>
           </div>
@@ -202,7 +211,6 @@ const loading = ref(false);
 const form = ref({
   username: '',
   email: '',
-  branch_name: '',
   password: '',
   password_confirmation: '',
 });
@@ -223,7 +231,7 @@ const passwordMismatch = computed(() => {
 });
 
 const isFormValid = computed(() => {
-  const hasBasicInfo = form.value.username && form.value.email && form.value.branch_name;
+  const hasBasicInfo = form.value.username && form.value.email;
   const passwordValid = !form.value.password || (form.value.password === form.value.password_confirmation && form.value.password.length >= 6);
   return hasBasicInfo && passwordValid;
 });
@@ -232,7 +240,6 @@ const loadUserData = () => {
   if (userStore.user) {
     form.value.username = userStore.user.username || '';
     form.value.email = userStore.user.email || '';
-    form.value.branch_name = userStore.user.branch_name || '';
     form.value.password = '';
     form.value.password_confirmation = '';
   }
@@ -257,7 +264,6 @@ const handleSubmit = async () => {
     const payload = {
       username: form.value.username,
       email: form.value.email,
-      branch_name: form.value.branch_name,
     };
 
     // Only include password if user wants to change it
