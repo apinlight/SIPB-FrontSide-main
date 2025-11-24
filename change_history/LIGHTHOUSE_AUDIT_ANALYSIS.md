@@ -209,12 +209,12 @@ server {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <!-- ✅ Add these SEO meta tags -->
-  <meta name="description" content="Sistem Informasi dan Pencatatan Barang - Kelola inventori, pengadaan, dan penggunaan barang dengan mudah">
+  <meta name="description" content="Sistem Informasi Manajemen Barang - Kelola inventori, pengadaan, dan penggunaan barang dengan mudah">
   <meta name="keywords" content="sistem informasi, manajemen barang, inventori, pengadaan">
-  <meta name="author" content="SIPB Team">
+  <meta name="author" content="SIMBA Team">
   
   <!-- Open Graph for social sharing -->
-  <meta property="og:title" content="SIPB - Sistem Informasi Pencatatan Barang">
+  <meta property="og:title" content="SIMBA - Sistem Informasi Manajemen Barang">
   <meta property="og:description" content="Platform manajemen inventori dan pengadaan barang">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://fe-sipb.crulxproject.com">
