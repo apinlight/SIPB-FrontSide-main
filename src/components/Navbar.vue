@@ -13,8 +13,8 @@
           </svg>
         </button>
         <h1 class="text-xl sm:text-2xl font-bold text-green-700">
-          <span class="hidden xs:inline">SIMBA</span>
-          <span class="inline xs:hidden">📦</span>
+          <span class="inline xs:inline">SIMBA </span>
+          <span class="inline xs:hidden">- Sistem Informasi Manajemen Barang 📦</span>
         </h1>
       </div>
 

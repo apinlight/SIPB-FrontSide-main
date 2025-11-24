@@ -78,7 +78,7 @@ const allMenu = [
     roles: ['admin', 'manager', 'user']
   },
   {
-    name: 'Pengadaan',
+    name: 'Pengadaan Barang',
     emoji: '📦',
     roles: ['admin', 'manager', 'user'],
     children: [
@@ -91,11 +91,11 @@ const allMenu = [
     ]
   },
   {
-    name: 'Penggunaan Barang',
+    name: 'Gudang',
     emoji: '🔧',
     roles: ['admin', 'manager', 'user'],
     children: [
-        { name: 'Kelola Penggunaan', path: '/penggunaan-barang', emoji: '📋', roles: ['admin', 'manager', 'user'] },
+        { name: 'Kelola Penggunaan Barang', path: '/penggunaan-barang', emoji: '📋', roles: ['admin', 'manager', 'user'] },
       { name: 'Stok Tersedia', path: '/stok-tersedia', emoji: '📊', roles: ['admin', 'manager', 'user'] }
     ]
   },
@@ -115,6 +115,7 @@ const allMenu = [
     children: [
       { name: 'Kelola Users', path: '/users', emoji: '👥', roles: ['admin'] },
       { name: 'Jenis Barang', path: '/jenis-barang', emoji: '🏷️', roles: ['admin'] },
+      { name: 'Kelola Cabang', path: '/cabang', emoji: '🏢', roles: ['admin'] },
       { name: 'Batas Barang', path: '/batas-barang', emoji: '⚠️', roles: ['admin'] },
       { name: 'Batas Pengajuan', path: '/batas-pengajuan', emoji: '📊', roles: ['admin'] }
     ]
