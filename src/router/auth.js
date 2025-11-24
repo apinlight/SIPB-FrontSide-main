@@ -10,15 +10,6 @@ export const authRoutes = [
     }
   },
   {
-    path: '/register',
-    name: 'Register',
-    component: () => import('@/pages/shared/Register.vue'),
-    meta: {
-      requiresGuest: true,
-      title: 'Register'
-    }
-  },
-  {
     path: '/forgot-password',
     name: 'ForgotPassword',
     component: () => import('@/pages/shared/ForgotPassword.vue'),

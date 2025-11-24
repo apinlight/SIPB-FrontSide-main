@@ -41,6 +41,12 @@ const routes = [
     meta: { requiresAuth: true, roles: ['admin'], title: 'Jenis Barang' }
   },
   {
+    path: '/cabang',
+    name: 'Cabang',
+    component: () => import('@/pages/Cabang.vue'),
+    meta: { requiresAuth: true, roles: ['admin'], title: 'Kelola Cabang' }
+  },
+  {
     path: '/batas-barang',
     name: 'BatasBarang',
     component: () => import('@/pages/BatasBarang.vue'),

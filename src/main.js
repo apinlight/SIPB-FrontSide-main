@@ -4,6 +4,11 @@ import App from './App.vue'
 import router from './router'
 import './index.css'
 
+console.log('--- ENV DEBUG ---');
+console.log('Mode:', import.meta.env.MODE);
+console.log('Base URL:', import.meta.env.VITE_API_BASE_URL);
+console.log('-----------------');
+
 // ✅ Toast: plugin + CSS
 import Toast from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
