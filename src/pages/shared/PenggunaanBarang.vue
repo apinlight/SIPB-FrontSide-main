@@ -9,12 +9,12 @@
             <p class="text-gray-600 mt-1">{{ getPageDescription() }}</p>
           </div>
           <div class="flex items-center space-x-3">
-            <span class="px-3 py-1 text-sm rounded-full" :class="getRoleBadgeClass()">
+            <span class="px-3 py-1 text-sm rounded-full" :class="getRoleBadgeSimpleClass(getRoleText())">
               {{ getRoleText() }}
             </span>
-            <!-- ✅ FIX: Manager tidak boleh create penggunaan barang (read-only) -->
+            <!-- ✅ FIX: Only regular Users dapat record usage; Admin & Manager are read-only -->
             <BaseButton 
-              v-if="!showForm && !userStore.isManager" 
+              v-if="!showForm && userStore.isUser" 
               variant="primary" 
               @click="showForm = true"
             >
@@ -59,6 +59,7 @@ import { useUserStore } from '@/stores/userStore'
 import { usePenggunaanBarangStore } from '@/stores/penggunaanBarangStore'
 import API from '@/lib/api'
 import { logger } from '@/lib/logger'
+import { getRoleBadgeSimpleClass } from '@/utils/formatters'
 
 const userStore = useUserStore()
 const penggunaanBarangStore = usePenggunaanBarangStore()
@@ -67,29 +68,19 @@ const editingPenggunaan = ref(null)
 const tableRef = ref(null)
 
 // Methods
-const getPageDescription = () => {
-  if (userStore.isAdmin) {
-    return 'Kelola semua penggunaan barang di seluruh cabang'
-  } else if (userStore.isManager) {
-    return 'Monitoring penggunaan barang di seluruh cabang (read-only)'
-  } else {
-    return 'Catat dan pantau penggunaan barang Anda'
-  }
-}
-
 const getRoleText = () => {
-  if (userStore.isAdmin) return 'Admin'
-  if (userStore.isManager) return 'Manager'
+  if (userStore.isAdmin) return 'Admin (Read-Only)'
+  if (userStore.isManager) return 'Manager (Read-Only)'
   return 'User'
 }
 
-const getRoleBadgeClass = () => {
+const getPageDescription = () => {
   if (userStore.isAdmin) {
-    return 'bg-red-100 text-red-800'
+    return 'Monitoring penggunaan barang dari semua cabang (read-only)'
   } else if (userStore.isManager) {
-    return 'bg-blue-100 text-blue-800'
+    return 'Monitoring penggunaan barang dari semua cabang (read-only)'
   } else {
-    return 'bg-green-100 text-green-800'
+    return 'Catat dan pantau penggunaan barang Anda'
   }
 }
 

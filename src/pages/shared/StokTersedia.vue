@@ -2,14 +2,26 @@
   <DefaultLayout>
     <div class="space-y-6">
       <div class="bg-white p-6 rounded-xl shadow">
-        <div class="flex justify-between items-center">
+        <div class="flex justify-between items-center gap-3 flex-wrap">
           <div>
             <h1 class="text-2xl font-bold text-gray-800">📊 Stok Tersedia</h1>
             <p class="text-gray-600 mt-1">Lihat stok barang yang tersedia untuk digunakan</p>
           </div>
-          <BaseButton @click="store.fetchStock()" variant="outline" :disabled="isLoading">
-            🔄 Refresh
-          </BaseButton>
+          <div class="flex items-center gap-2">
+            <template v-if="isAdmin || isManager">
+              <select v-model="mode" @change="refreshStock" class="px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                <option value="total">Total</option>
+                <option value="terpisah">Terpisah</option>
+              </select>
+              <select v-if="mode === 'terpisah'" v-model="selectedCabang" @change="refreshStock" class="px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                <option value="">-- Pilih Cabang --</option>
+                <option v-for="c in cabangList" :key="c.id_cabang" :value="c.id_cabang">{{ c.nama_cabang }}</option>
+              </select>
+            </template>
+            <BaseButton @click="refreshStock" variant="outline" :disabled="isLoading">
+              🔄 Refresh
+            </BaseButton>
+          </div>
         </div>
       </div>
 
@@ -53,10 +65,13 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ item.id_barang || '-' }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm">{{ item.nama_barang || 'Unknown' }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.jenis_barang || 'N/A' }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">{{ item.jumlah_tersedia ?? 0 }} unit</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                  {{ item.jumlah_tersedia ?? 0 }} unit
+                  <span class="text-xs text-gray-500 ml-2">(Min: {{ item.batas_minimum ?? 5 }})</span>
+                </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span :class="getStockBadgeClass(item.jumlah_tersedia ?? 0)">
-                    {{ getStockStatus(item.jumlah_tersedia ?? 0, 5) }}
+                  <span :class="getStockBadgeClass(item.jumlah_tersedia ?? 0, item.batas_minimum)">
+                    {{ getStockStatus(item.jumlah_tersedia ?? 0, item.batas_minimum ?? 5) }}
                   </span>
                 </td>
               </tr>
@@ -79,12 +94,12 @@
                 <p class="text-xs text-gray-500">Kode: {{ item.id_barang || '-' }}</p>
                 <p class="text-xs text-gray-500">Jenis: {{ item.jenis_barang || 'N/A' }}</p>
               </div>
-              <span :class="getStockBadgeClass(item.jumlah_tersedia ?? 0)">
-                {{ getStockStatus(item.jumlah_tersedia ?? 0, 5) }}
+              <span :class="getStockBadgeClass(item.jumlah_tersedia ?? 0, item.batas_minimum)">
+                {{ getStockStatus(item.jumlah_tersedia ?? 0, item.batas_minimum ?? 5) }}
               </span>
             </div>
             <div class="mt-2">
-              <span class="text-sm font-medium">Stok: {{ item.jumlah_tersedia ?? 0 }} unit</span>
+              <span class="text-sm font-medium">Stok: {{ item.jumlah_tersedia ?? 0 }} unit • Min: {{ item.batas_minimum ?? 5 }}</span>
             </div>
           </div>
         </div>
@@ -109,18 +124,44 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import BaseButton from '@/components/BaseButton.vue';
 import { useStokStore } from '@/stores/stokStore';
+import { useCabangStore } from '@/stores/cabangStore';
+import { useUserStore } from '@/stores/userStore';
 // ✅ Import the correct, standardized function names
 import { getStockStatus, getStockBadgeClass } from '@/utils/formatters';
 
 const store = useStokStore();
 const { isLoading, filterQuery, filteredStock, totalStockCount, lowStockCount, totalItemTypes } = storeToRefs(store);
 
+const userStore = useUserStore();
+const isAdmin = userStore.isAdmin;
+const isManager = userStore.isManager;
+
+const cabangStore = useCabangStore();
+const { cabangList } = storeToRefs(cabangStore);
+
+const mode = ref('total');
+const selectedCabang = ref('');
+
+const refreshStock = () => {
+  const options = {};
+  if (isAdmin || isManager) {
+    options.mode = mode.value;
+    if (mode.value === 'terpisah' && selectedCabang.value) {
+      options.id_cabang = selectedCabang.value;
+    }
+  }
+  store.fetchStock(options);
+};
+
 onMounted(() => {
-  store.fetchStock();
+  if (isAdmin || isManager) {
+    cabangStore.fetchCabang();
+  }
+  refreshStock();
 });
 </script>
