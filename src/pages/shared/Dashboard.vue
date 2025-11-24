@@ -13,7 +13,7 @@
           <h2 class="text-xl font-semibold mb-2">👋 Selamat Datang, {{ userStore.user.username }}!</h2>
           <p class="text-sm opacity-90">
             Anda login sebagai <span class="font-semibold">{{ formatRole }}</span>
-            <span v-if="!userStore.isAdmin"> di {{ userStore.user.branch_name }}</span>
+            <span v-if="!userStore.isAdmin"> di {{ cabangName }}</span>
           </p>
         </div>
 
@@ -53,7 +53,7 @@
             <!-- Branch Info (for non-admin) -->
             <div v-if="!userStore.isAdmin" class="p-4 bg-orange-50 rounded-lg border border-orange-100">
               <p class="text-xs font-semibold text-orange-600 uppercase tracking-wide">Cabang</p>
-              <p class="font-semibold text-gray-900 mt-1">{{ userStore.user.branch_name || 'Pusat' }}</p>
+              <p class="font-semibold text-gray-900 mt-1">{{ cabangName }}</p>
               <p class="text-xs text-gray-600 mt-1">ID: {{ userStore.user.id_cabang }}</p>
             </div>
           </div>
@@ -86,7 +86,7 @@
                 <div class="flex-1">
                   <p class="font-semibold text-blue-900">Akses Manager</p>
                   <ul class="text-sm text-blue-800 mt-2 space-y-1 list-disc list-inside">
-                    <li>Mengelola barang di cabang {{ userStore.user.branch_name }}</li>
+                    <li>Mengelola barang di cabang {{ cabangName }}</li>
                     <li>Menyetujui/menolak pengajuan barang</li>
                     <li>Melihat laporan penggunaan barang</li>
                     <li>Mengelola pengguna cabang</li>
@@ -150,6 +150,22 @@ const formatRole = computed(() => {
   if (userStore.isManager) return 'Manager'
   if (userStore.isUser) return 'User'
   return 'Pengguna'
+})
+
+// Get cabang name from cabang relationship or fallback to id_cabang
+const cabangName = computed(() => {
+  if (userStore.user?.cabang) {
+    // If cabang is an object with nama_cabang property
+    if (typeof userStore.user.cabang === 'object' && userStore.user.cabang.nama_cabang) {
+      return userStore.user.cabang.nama_cabang
+    }
+    // If cabang is just a string
+    if (typeof userStore.user.cabang === 'string') {
+      return userStore.user.cabang
+    }
+  }
+  // Fallback to Pusat if no cabang data
+  return 'Pusat'
 })
 </script>
 
