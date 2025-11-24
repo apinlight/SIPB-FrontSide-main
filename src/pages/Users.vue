@@ -5,16 +5,20 @@ import { toast } from 'vue3-toastify';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import { useUserStore } from '@/stores/userStore';
 import { useUserManagementStore } from '@/stores/userManagementStore'; // ✅ Import the new store
+import { useCabangStore } from '@/stores/cabangStore';
 import { logger } from '@/lib/logger';
 import BaseButton from '@/components/BaseButton.vue'
+import { getRoleBadgeSimpleClass } from '@/utils/formatters'
 
 // --- STORES ---
 const userStore = useUserStore();
 const userManagementStore = useUserManagementStore();
+const cabangStore = useCabangStore();
 
 // ✅ Get state and actions from the stores. `storeToRefs` keeps them reactive.
 const { users, pagination, filters, loading, error } = storeToRefs(userManagementStore);
 const { fetchUsers, saveUser, deleteUser, applyFilters } = userManagementStore;
+const { cabangList } = storeToRefs(cabangStore);
 
 
 // --- LOCAL COMPONENT STATE ---
@@ -27,7 +31,7 @@ const form = ref({
   email: '',
   password: '',
   password_confirmation: '',
-  branch_name: '',
+  id_cabang: '',
   role: ''
 });
 
@@ -44,7 +48,7 @@ const canDeleteUser = (user) => {
 const canEditUser = (user) => {
   if (userStore.isAdmin) return true;
   if (userStore.isManager) {
-    return user.branch_name === userStore.user?.branch_name;
+    return user.id_cabang === userStore.user?.id_cabang;
   }
   return user.unique_id === userStore.user?.unique_id;
 };
@@ -70,7 +74,7 @@ const handleEdit = (user) => {
     username: user.username,
     email: user.email,
     password: '',
-    branch_name: user.branch_name,
+    id_cabang: user.id_cabang || '',
     role: getUserRole(user)
   };
   editMode.value = true;
@@ -101,23 +105,14 @@ const changePage = (page) => {
 const resetForm = () => {
   logger.debug('Resetting user form');
   form.value = {
-    unique_id: '', username: '', email: '', password: '', password_confirmation: '', branch_name: '', role: ''
+    unique_id: '', username: '', email: '', password: '', password_confirmation: '', id_cabang: '', role: ''
   };
   editMode.value = false;
   // ✅ FIX: Don't auto-hide form when resetting - let the caller decide
   // showForm.value = false; 
 };
 
-const getRoleBadgeClass = (roleName) => {
-  const roleClasses = {
-    'admin': 'bg-red-100 text-red-800',
-    'manager': 'bg-blue-100 text-blue-800',
-    'user': 'bg-green-100 text-green-800',
-  };
-  return roleClasses[roleName] || 'bg-gray-100 text-gray-800';
-};
-
-// Helper to get the role name from user object
+// Helper to get the user role name from user object
 const getUserRole = (user) => {
   // Backend sends roles as array of strings: ["admin"] or ["manager"]
   if (Array.isArray(user.roles) && user.roles.length > 0) {
@@ -131,6 +126,7 @@ onMounted(() => {
   logger.info('Users page mounted');
   if (canManageUsers.value) {
     fetchUsers(1); // ✅ Simple call to the store action
+    cabangStore.fetchCabang(); // Load cabang list for dropdown
   } else {
     logger.warn('Access denied to users page', { userRoles: userStore.userRoles });
   }
@@ -219,14 +215,17 @@ onMounted(() => {
               </p>
             </div>
             <div>
-              <label class="block text-sm font-medium mb-2">Nama Cabang</label>
-              <input
-                v-model="form.branch_name"
-                type="text"
+              <label class="block text-sm font-medium mb-2">Cabang</label>
+              <select
+                v-model="form.id_cabang"
                 class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="Masukkan nama cabang"
                 required
-              />
+              >
+                <option value="">-- Pilih Cabang --</option>
+                <option v-for="cabang in cabangList" :key="cabang.id_cabang" :value="cabang.id_cabang">
+                  {{ cabang.nama_cabang }}
+                </option>
+              </select>
             </div>
             <div>
               <label class="block text-sm font-medium mb-2">Role</label>
@@ -290,7 +289,7 @@ onMounted(() => {
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Cabang</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cabang</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
             </tr>
@@ -300,11 +299,11 @@ onMounted(() => {
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.unique_id }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.username }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.email }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.branch_name }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.cabang?.nama_cabang || '-' }}</td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span
                   v-if="getUserRole(user)"
-                  :class="getRoleBadgeClass(getUserRole(user))"
+                  :class="getRoleBadgeSimpleClass(getUserRole(user))"
                   class="px-2 py-1 text-xs font-medium rounded-full"
                 >
                   {{ getUserRole(user) }}
@@ -329,11 +328,11 @@ onMounted(() => {
               <div>
                 <h3 class="font-semibold text-gray-900">{{ user.username }}</h3>
                 <p class="text-xs text-gray-500">{{ user.email }}</p>
-                <p class="text-xs text-gray-500">Cabang: {{ user.branch_name }}</p>
+                <p class="text-xs text-gray-500">Cabang: {{ user.cabang?.nama_cabang || '-' }}</p>
               </div>
               <span
                 v-if="getUserRole(user)"
-                :class="getRoleBadgeClass(getUserRole(user))"
+                :class="getRoleBadgeSimpleClass(getUserRole(user))"
                 class="px-2 py-1 text-xs font-medium rounded-full"
               >
                 {{ getUserRole(user) }}

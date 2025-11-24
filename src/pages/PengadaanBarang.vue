@@ -48,6 +48,7 @@ import BarangTable from '@/components/BarangTable.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import { useUserStore } from '@/stores/userStore'
 import { logger } from '@/lib/logger'
+import { formatDate, formatCurrency } from '@/utils/formatters'
 
 const userStore = useUserStore()
 
@@ -193,18 +194,6 @@ const changePage = (page) => {
     logger.debug('Changing page', { page })
     fetchData(page)
   }
-}
-
-const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString('id-ID', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric'
-  })
-}
-
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('id-ID').format(amount)
 }
 
 const getTotalValue = (item) => {

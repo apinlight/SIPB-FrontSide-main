@@ -11,11 +11,11 @@
         <form @submit.prevent="submitForm" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block mb-1 font-semibold">Pilih User/Cabang</label>
-              <select v-model="form.unique_id" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
-                <option disabled value="">-- Pilih User --</option>
-                <option v-for="user in formDependencies.users" :key="user.unique_id" :value="user.unique_id">
-                  {{ user.username }} - {{ user.branch_name }}
+              <label class="block mb-1 font-semibold">Pilih Cabang</label>
+              <select v-model="form.id_cabang" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
+                <option disabled value="">-- Pilih Cabang --</option>
+                <option v-for="cabang in formDependencies.cabang" :key="cabang.id_cabang" :value="cabang.id_cabang">
+                  {{ cabang.nama_cabang }}
                 </option>
               </select>
             </div>
@@ -64,18 +64,18 @@
               <thead class="bg-gray-50">
                 <tr>
                   <th class="border px-4 py-3 text-left">Tanggal</th>
-                  <th class="border px-4 py-3 text-left">User/Cabang</th>
+                  <th class="border px-4 py-3 text-left">Cabang</th>
                   <th class="border px-4 py-3 text-left">Barang</th>
                   <th class="border px-4 py-3 text-center">Jumlah</th>
                   <th class="border px-4 py-3 text-center">Aksi</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="item in riwayatList" :key="item.id || (item.unique_id + '-' + item.id_barang + '-' + item.created_at)" class="border-b hover:bg-gray-50">
+                <tr v-for="item in riwayatList" :key="item.id || (item.id_cabang + '-' + item.id_barang + '-' + item.created_at)" class="border-b hover:bg-gray-50">
                   <td class="border px-4 py-3">{{ formatDate(item.created_at) }}</td>
                   <td class="border px-4 py-3">
-                    {{ item.user?.username }}<br>
-                    <span class="text-sm text-gray-500">{{ item.user?.branch_name }}</span>
+                    {{ item.cabang?.nama_cabang || '-' }}<br>
+                    <span class="text-sm text-gray-500">{{ item.barang?.jenis?.nama_jenis || 'Barang' }}</span>
                   </td>
                   <td class="border px-4 py-3">
                     {{ item.barang?.nama_barang }}
@@ -90,12 +90,12 @@
           </div>
           <!-- Mobile Cards -->
           <div class="md:hidden divide-y">
-            <div v-for="item in riwayatList" :key="item.id || (item.unique_id + '-' + item.id_barang + '-' + item.created_at)" class="p-4">
+            <div v-for="item in riwayatList" :key="item.id || (item.id_cabang + '-' + item.id_barang + '-' + item.created_at)" class="p-4">
               <div class="flex justify-between items-start">
                 <div>
                   <h3 class="font-semibold text-gray-900">{{ item.barang?.nama_barang }}</h3>
                   <p class="text-xs text-gray-500">{{ formatDate(item.created_at) }}</p>
-                  <p class="text-xs text-gray-500">{{ item.user?.username }} — {{ item.user?.branch_name }}</p>
+                  <p class="text-xs text-gray-500">Cabang: {{ item.cabang?.nama_cabang || '-' }}</p>
                 </div>
               </div>
               <div class="flex items-center justify-between mt-2">
@@ -132,7 +132,7 @@ const {
   formDependencies,
 } = storeToRefs(store);
 
-const form = ref({ unique_id: '', id_barang: '', jumlah: 1, keterangan: '' });
+const form = ref({ id_cabang: '', id_barang: '', jumlah: 1, keterangan: '' });
 
 onMounted(() => {
   store.fetchFormDependencies();
@@ -153,7 +153,7 @@ const handleDelete = (item) => {
 }
 
 const resetForm = () => {
-  form.value = { unique_id: '', id_barang: '', jumlah: 1, keterangan: '' };
+  form.value = { id_cabang: '', id_barang: '', jumlah: 1, keterangan: '' };
 };
 
 const prevPage = () => {
