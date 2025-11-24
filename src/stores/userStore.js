@@ -20,6 +20,7 @@ export const useUserStore = defineStore('user', {
         },
         isAdmin(state) { return this.userRoles.includes('admin') || this.userRoles.includes('superadmin'); },
         isManager(state) { return this.userRoles.includes('manager'); },
+        isUser(state) { return this.userRoles.includes('user'); },
     },
 
     actions: {

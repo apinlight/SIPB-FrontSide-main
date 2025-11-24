@@ -7,7 +7,7 @@ export const useLaporanStore = defineStore('laporan', {
   state: () => ({
     filters: {
       period: 'month',
-      branch: '',
+      id_cabang: '',
       startDate: '',
       endDate: '',
     },
@@ -20,7 +20,7 @@ export const useLaporanStore = defineStore('laporan', {
     laporanBarang: [],
     laporanPengajuan: [],
     laporanCabang: [],
-    branches: [],
+    cabangList: [],
     loading: false,
     error: null,
   }),
@@ -65,7 +65,7 @@ export const useLaporanStore = defineStore('laporan', {
         }
 
         const params = {
-          branch: this.filters.branch || undefined,
+          id_cabang: this.filters.id_cabang || undefined,
           start_date: start,
           end_date: end,
         };
@@ -88,10 +88,22 @@ export const useLaporanStore = defineStore('laporan', {
         // Cabang (optional)
         if (!cabangRes?.error) {
           this.laporanCabang = cabangRes?.data?.data || [];
-          this.branches = [...new Set((this.laporanCabang || []).map(c => c.branch_name).filter(Boolean))];
+          // Backend now returns cabang with keys: id_cabang, nama_cabang
+          const cabangMap = new Map();
+          (this.laporanCabang || []).forEach(c => {
+            if (c.id_cabang && c.nama_cabang) cabangMap.set(c.id_cabang, c.nama_cabang);
+          });
+          this.cabangList = Array.from(cabangMap, ([id, nama]) => ({ id, nama }));
         } else {
-          // Fallback: derive branches from pengajuan data
-          this.branches = [...new Set(allPengajuan.map(p => p.user?.branch_name).filter(Boolean))];
+          // Fallback: derive from pengajuan user.cabang data
+          const cabangMap = new Map();
+          allPengajuan.forEach(p => {
+            const cabang = p.user?.cabang || p.cabang;
+            if (cabang?.id_cabang && cabang?.nama_cabang) {
+              cabangMap.set(cabang.id_cabang, cabang.nama_cabang);
+            }
+          });
+          this.cabangList = Array.from(cabangMap, ([id, nama]) => ({ id, nama }));
         }
 
         logger.success('Store: Laporan data fetched successfully');
@@ -128,7 +140,7 @@ export const useLaporanStore = defineStore('laporan', {
       try {
         const params = {
           period: this.filters.period,
-          branch: this.filters.branch || undefined,
+          id_cabang: this.filters.id_cabang || undefined,
           start_date: this.filters.startDate || undefined,
           end_date: this.filters.endDate || undefined,
         };

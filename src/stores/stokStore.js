@@ -38,11 +38,14 @@ export const useStokStore = defineStore('stok', {
 
   actions: {
     // This logic is moved from the old store to its correct home
-    async fetchStock() {
+    async fetchStock(options = {}) {
       this.isLoading = true;
       this.error = null;
       try {
-        const response = await apiClient.get('/stok-tersedia');
+        const params = {};
+        if (options.mode) params.mode = options.mode; // 'total' | 'terpisah'
+        if (options.id_cabang) params.id_cabang = options.id_cabang;
+        const response = await apiClient.get('/stok-tersedia', { params });
         this.stockList = response.data.data;
         logger.info('Available stock loaded:', this.stockList); // ✅ Debug: Log actual data
         logger.success('Available stock loaded successfully');

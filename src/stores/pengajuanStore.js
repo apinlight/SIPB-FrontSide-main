@@ -10,31 +10,17 @@ function processBarangData(apiData) {
   const { barang, user_info } = apiData;
 
   return barang.map(b => {
-    const { stock_info } = b;
-    const currentStock = stock_info.user_stock || 0;
-    const adminStock = stock_info.admin_stock || 0;
-    const batasLimit = stock_info.per_barang_limit;
-
-    const availableAllocation = batasLimit != null ? Math.max(0, batasLimit - currentStock) : null;
+    // stock_info is now embedded in each barang item
+    const currentStock = b.stock_info?.user_stock || 0;
+    const adminStock = b.stock_info?.admin_stock || 0;
+    
+    // Per-item limits were removed from the system - limits are now monthly-based only
+    const batasLimit = null;
+    const availableAllocation = null;
     
     let status = 'available';
-    let statusText = 'Tersedia';
-    let statusColor = 'text-green-600';
-
-    if (batasLimit != null) {
-      if (currentStock >= batasLimit) {
-        status = 'maxed';
-        statusText = 'Batas Tercapai';
-        statusColor = 'text-red-600';
-      } else if (currentStock >= batasLimit * 0.8) {
-        status = 'warning';
-        statusText = 'Mendekati Batas';
-        statusColor = 'text-yellow-600';
-      }
-    } else {
-        statusText = currentStock > 0 ? 'Stok Tersedia' : 'Stok Kosong';
-        statusColor = currentStock > 0 ? 'text-green-600' : 'text-gray-600';
-    }
+    let statusText = currentStock > 0 ? 'Stok Tersedia' : 'Stok Kosong';
+    let statusColor = currentStock > 0 ? 'text-green-600' : 'text-gray-600';
 
     return {
       ...b,
@@ -45,7 +31,7 @@ function processBarangData(apiData) {
       status,
       statusText,
       statusColor,
-      showLimitInfo: batasLimit != null,
+      showLimitInfo: false,
     };
   });
 }
@@ -84,7 +70,7 @@ export const usePengajuanStore = defineStore('pengajuan', {
       logger.info('Store: Initializing Pengajuan page data');
 
       try {
-        const response = await apiClient.get('/pengajuan/barang-info');
+        const response = await apiClient.get('/pengajuan/info/barang');
         const data = response.data.data;
 
         // Process and set state from the combined endpoint

@@ -14,7 +14,7 @@ export const usePengadaanAdminStore = defineStore('pengadaanAdmin', {
 
     // State specifically for the Manual Pengadaan form
     formDependencies: {
-      users: [],
+      cabang: [],
       barang: [],
     },
   }),
@@ -114,8 +114,8 @@ export const usePengadaanAdminStore = defineStore('pengadaanAdmin', {
     async fetchFormDependencies() {
       this.loading = true;
       try {
-        const [usersRes, barangRes] = await Promise.all([apiClient.get('/users'), apiClient.get('/barang')]);
-        this.formDependencies.users = usersRes.data.data;
+        const [cabangRes, barangRes] = await Promise.all([apiClient.get('/cabang'), apiClient.get('/barang')]);
+        this.formDependencies.cabang = cabangRes.data.data;
         this.formDependencies.barang = barangRes.data.data;
       } catch (e) {
         toast.error('Gagal memuat data untuk form.');
@@ -130,10 +130,11 @@ export const usePengadaanAdminStore = defineStore('pengadaanAdmin', {
             // Manual procurement should use POST /gudang to directly add stock
             // instead of /pengajuan/manual which doesn't exist
             await apiClient.post('/gudang', {
-              unique_id: formData.unique_id,
+              id_cabang: formData.id_cabang,
               id_barang: formData.id_barang,
               jumlah_barang: formData.jumlah,
-              keterangan: formData.keterangan || 'Pengadaan manual oleh admin'
+              keterangan: formData.keterangan || 'Pengadaan manual oleh admin',
+              tipe: 'manual'
             });
             toast.success('Pengadaan manual berhasil ditambahkan.');
             // Refresh the history list - using regular gudang endpoint
@@ -149,7 +150,7 @@ export const usePengadaanAdminStore = defineStore('pengadaanAdmin', {
     
     async deleteManualRiwayat(item) {
         try {
-            await apiClient.delete(`/gudang/${item.unique_id}/${item.id_barang}`);
+            await apiClient.delete(`/gudang/${item.id_cabang}/${item.id_barang}`);
             toast.success('Riwayat berhasil dihapus.');
             this.itemList = this.itemList.filter(i => i.id !== item.id);
         } catch (e) {
