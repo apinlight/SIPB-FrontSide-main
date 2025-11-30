@@ -29,9 +29,9 @@ export const useRiwayatCabangStore = defineStore('riwayatCabang', {
       this.error = null;
       const userStore = useUserStore();
       
-      const branchName = userStore.user?.branch_name;
-      if (!branchName) {
-        this.error = 'Branch name not found for manager.';
+      const idCabang = userStore.user?.cabang?.id_cabang || userStore.user?.id_cabang;
+      if (!idCabang) {
+        this.error = 'ID cabang tidak ditemukan untuk manager.';
         toast.error(this.error);
         this.loading = false;
         return;
@@ -42,7 +42,7 @@ export const useRiwayatCabangStore = defineStore('riwayatCabang', {
           page,
           search: this.filters.search || undefined,
           status: this.filters.status || undefined,
-          branch: branchName, // Always filter by the manager's branch
+          id_cabang: idCabang, // ✅ Filter by cabang ID (backend expects id_cabang)
         };
         const { data } = await apiClient.get('/pengajuan', { params });
         this.pengajuanList = data.data || [];
