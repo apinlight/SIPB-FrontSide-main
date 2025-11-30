@@ -26,9 +26,9 @@
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">Cabang</label>
-            <select v-model="filters.branch" @change="fetchLaporanData" class="w-full border rounded px-3 py-2">
+            <select v-model="filters.id_cabang" @change="fetchLaporanData" class="w-full border rounded px-3 py-2">
               <option value="">Semua Cabang</option>
-              <option v-for="branch in branches" :key="branch" :value="branch">{{ branch }}</option>
+              <option v-for="cabang in laporanStore.cabangList" :key="cabang.id" :value="cabang.id">{{ cabang.nama }}</option>
             </select>
           </div>
         </div>
