@@ -108,7 +108,7 @@
                   <tbody>
                     <tr v-for="p in laporanPengajuan" :key="p.id_pengajuan" class="border-b hover:bg-gray-50">
                       <td class="border px-4 py-3">{{ p.user?.name || '-' }}</td>
-                      <td class="border px-4 py-3">{{ p.user?.branch_name || '-' }}</td>
+                      <td class="border px-4 py-3">{{ p.user?.cabang?.nama_cabang || p.user?.branch_name || '-' }}</td>
                       <td class="border px-4 py-3 text-center">{{ p.total_items ?? 0 }}</td>
                       <td class="border px-4 py-3 text-right">Rp {{ formatCurrency(p.total_nilai ?? 0) }}</td>
                       <td class="border px-4 py-3 text-center">
@@ -134,8 +134,8 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="c in laporanCabang" :key="c.branch_name" class="border-b hover:bg-gray-50">
-                      <td class="border px-4 py-3">{{ c.branch_name || '-' }}</td>
+                    <tr v-for="c in laporanCabang" :key="c.nama_cabang || c.id_cabang" class="border-b hover:bg-gray-50">
+                      <td class="border px-4 py-3">{{ c.nama_cabang || c.branch_name || '-' }}</td>
                       <td class="border px-4 py-3 text-center">{{ c.total_pengajuan ?? 0 }}</td>
                       <td class="border px-4 py-3 text-center">{{ c.total_disetujui ?? 0 }}</td>
                       <td class="border px-4 py-3 text-center">{{ c.total_menunggu ?? 0 }}</td>
