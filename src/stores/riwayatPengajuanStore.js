@@ -41,8 +41,11 @@ export const useRiwayatPengajuanStore = defineStore('riwayatPengajuan', {
           page,
           search: this.filters.search || undefined,
           status: this.filters.status || undefined,
-          user_id: userStore.user.unique_id, // Always filter by the current user
         };
+        // For regular users, scope to their own submissions; admin/manager see all
+        if (!userStore.isAdmin && !userStore.isManager) {
+          params.user_id = userStore.user.unique_id;
+        }
         const { data } = await apiClient.get('/pengajuan', { params });
         this.riwayatList = data.data || [];
         this.pagination = data.meta || { current_page: 1, last_page: 1, total: 0 };
