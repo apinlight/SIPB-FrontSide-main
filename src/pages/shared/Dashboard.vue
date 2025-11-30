@@ -84,13 +84,16 @@
               <div class="flex gap-3">
                 <span class="text-2xl">👔</span>
                 <div class="flex-1">
-                  <p class="font-semibold text-blue-900">Akses Manager</p>
+                  <p class="font-semibold text-blue-900">Akses Manager (Global Oversight)</p>
                   <ul class="text-sm text-blue-800 mt-2 space-y-1 list-disc list-inside">
-                    <li>Mengelola barang di cabang {{ cabangName }}</li>
-                    <li>Menyetujui/menolak pengajuan barang</li>
-                    <li>Melihat laporan penggunaan barang</li>
-                    <li>Mengelola pengguna cabang</li>
+                    <li>Memantau semua pengajuan dan penggunaan barang (read-only)</li>
+                    <li>Melihat laporan dari semua cabang</li>
+                    <li>Melihat daftar pengguna sistem (read-only)</li>
+                    <li>Mengakses stok barang semua cabang</li>
                   </ul>
+                  <p class="text-xs text-blue-700 mt-3 italic">
+                    ⚠️ Manager tidak dapat approve pengajuan atau mengubah data master
+                  </p>
                 </div>
               </div>
             </div>
