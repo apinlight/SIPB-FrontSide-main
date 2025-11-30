@@ -104,8 +104,7 @@ const allMenu = [
     emoji: '📈',
     roles: ['admin', 'manager'],
     children: [
-      { name: 'Laporan Pengadaan', path: '/laporan', emoji: '📊', roles: ['admin'] },
-      { name: 'Riwayat Cabang', path: '/manager/riwayat-cabang', emoji: '🏢', roles: ['manager'] }
+      { name: 'Laporan Pengadaan', path: '/laporan', emoji: '📊', roles: ['admin', 'manager'] }
     ]
   },
   {
